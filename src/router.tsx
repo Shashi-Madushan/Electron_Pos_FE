@@ -1,12 +1,40 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
-import UserDashboard from "./components/UserDashbord";
+import UserDashbord from "./components/UserDashbord";
 import LoginPage from "./pages/LoginPage";
-import { UserLayout } from "./layouts/userLayout";
+import { UserLayout } from "./layouts/UserLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
+import { useAuth } from './context/AuthContext';
+
+// Admin Pages
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import UserManagement from "./pages/admin/UserManagement";
+import SystemSettings from "./pages/admin/SystemSettings";
+import Reports from "./pages/admin/Reports";
+import Inventory from "./pages/admin/Inventory";
+import Categories from "./pages/admin/Categories";
+import Brands from "./pages/admin/Brands";
+import Products from "./pages/admin/Products";
+import Sales from "./pages/admin/Sales";
 
 // Route Guards
 import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
+
+// Root redirect based on authentication status
+const RootRedirect = () => {
+  const { isAuthenticated, user } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  // Redirect based on user role
+  if (user?.role === 'Admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  return <Navigate to="/dashboard" replace />;
+};
 
 const router = createBrowserRouter([
   // Public Routes
@@ -16,7 +44,7 @@ const router = createBrowserRouter([
   },
   {
     path: "/",
-    element: <Navigate to="/login" replace />
+    element: <RootRedirect />
   },
 
   // USER-PROTECTED ROUTES (Cashier / Regular User)
@@ -28,7 +56,7 @@ const router = createBrowserRouter([
       </UserRoute>
     ),
     children: [
-      { path: "", element: <UserDashboard /> },
+      { path: "", element: <UserDashbord /> },
       { path: "pos", element: <div>POS Dashboard</div> },
       { path: "my-orders", element: <div>My Orders</div> },
       { path: "profile", element: <div>Profile</div> },
@@ -53,14 +81,15 @@ const router = createBrowserRouter([
       </AdminRoute>
     ),
     children: [
-      { path: "", element: <div>Admin POS Dashboard</div> }, // Admin overview dashboard
-      { path: "products", element: <div>Product Management</div> }, // CRUD products
-      { path: "categories", element: <div>Category Management</div> }, // Manage product categories
-      { path: "users", element: <div>Users</div> }, // Manage system users (cashiers/admins)
-      { path: "orders", element: <div>Order Management</div> }, // View/filter/cancel/refund orders
-      { path: "reports", element: <div>Reports & Analytics</div> }, // Sales reports & analytics
-      { path: "settings", element: <div>System Settings</div> }, // System configurations
-      { path: "inventory", element: <div>Stock Control</div> } // Manage stock adjustments
+      { path: "", element: <AdminDashboard /> }, // Admin overview dashboard
+      { path: "products", element: <Products /> }, // CRUD products
+      { path: "categories", element: <Categories /> }, // Manage product categories
+      { path: "brands", element: <Brands /> }, // Manage brands
+      { path: "users", element: <UserManagement /> }, // Manage system users
+      { path: "inventory", element: <Inventory /> }, // Manage inventory
+      { path: "sales", element: <Sales /> }, // Sales management
+      { path: "reports", element: <Reports /> }, // Reports & analytics
+      { path: "settings", element: <SystemSettings /> } // System configurations
     ]
   }
 ]);

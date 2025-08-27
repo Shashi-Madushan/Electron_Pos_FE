@@ -1,5 +1,10 @@
 import apiClient from "./ApiClient";
 
+export interface Category {
+  categoryId?: number; // optional for creation
+  name: string;
+}
+
 export const saveCategory = async (categoryData: any) => {
   try {
     const response = await apiClient.post("/categories", categoryData);

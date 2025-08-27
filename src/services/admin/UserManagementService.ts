@@ -1,8 +1,13 @@
 import apiClient from "../ApiClient";
 
+interface UserDTO {
+    // Add your user properties here
+    [key: string]: any;
+}
+
 export const getAllUsers = async () => {
     try {
-        const response = await apiClient.get('/user/all');
+        const response = await apiClient.get('/admin/users');
         return response.data;
     } catch (error) {
         console.error('Error fetching users:', error);
@@ -10,32 +15,22 @@ export const getAllUsers = async () => {
     }
 }
 
-export const activateUser = async (userId: string) => {
+export const deleteUser = async (userId: number) => {
     try {
-        const response = await apiClient.patch(`/user/activate/${userId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error activating user:', error);
-        throw error;
-    }
-}
-
-export const deactivateUser = async (userId: string) => {
-    try {
-        const response = await apiClient.patch(`/user/deactivate/${userId}`);
-        return response.data;
-    } catch (error) {
-        console.error('Error deactivating user:', error);
-        throw error;
-    }
-}
-
-export const deleteUser = async (userId: string) => {
-    try {
-        const response = await apiClient.delete(`/user/${userId}`);
+        const response = await apiClient.delete(`/admin/users/${userId}`);
         return response.data;
     } catch (error) {
         console.error('Error deleting user:', error);
+        throw error;
+    }
+}
+
+export const updateUser = async (userId: number, userData: UserDTO) => {
+    try {
+        const response = await apiClient.put(`/admin/users/${userId}`, userData);
+        return response.data;
+    } catch (error) {
+        console.error('Error updating user:', error);
         throw error;
     }
 }
