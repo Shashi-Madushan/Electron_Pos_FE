@@ -1,6 +1,8 @@
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import UserDashboard from "./components/UserDashbord";
 import LoginPage from "./pages/LoginPage";
+import { UserLayout } from "./layouts/userLayout";
+import { AdminLayout } from "./layouts/AdminLayout";
 
 // Route Guards
 import UserRoute from "./components/UserRoute";
@@ -22,17 +24,17 @@ const router = createBrowserRouter([
     path: "/dashboard",
     element: (
       <UserRoute>
-        <UserDashboard />
+        <UserLayout />
       </UserRoute>
     ),
     children: [
-      { path: "", element: <UserDashboard /> }, // User home dashboard (summary, quick links)
-      { path: "pos", element: <div>POS Dashboard</div> }, // Cashier POS order page
-      { path: "my-orders", element: <div>My Orders</div> }, // View user's past orders
-      { path: "profile", element: <div>Profile</div> }, // View/update personal profile
-      { path: "settings", element: <div>Account Settings</div> }, // User account preferences
-      { path: "inventory", element: <div>Inventory Check</div> }, // Search/check product stock
-      { path: "search", element: <div>Search Products</div> } // Search products in system
+      { path: "", element: <UserDashboard /> },
+      { path: "pos", element: <div>POS Dashboard</div> },
+      { path: "my-orders", element: <div>My Orders</div> },
+      { path: "profile", element: <div>Profile</div> },
+      { path: "settings", element: <div>Account Settings</div> },
+      { path: "inventory", element: <div>Inventory Check</div> },
+      { path: "search", element: <div>Search Products</div> }
     ]
   },
 
@@ -47,7 +49,7 @@ const router = createBrowserRouter([
     path: "/admin",
     element: (
       <AdminRoute>
-        <div>Admin Dashboard</div>
+        <AdminLayout />
       </AdminRoute>
     ),
     children: [
