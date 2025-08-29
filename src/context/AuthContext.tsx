@@ -62,7 +62,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         token,
         isAuthenticated,
         login,
-        logout
+        logout,
     };
 
     return (
@@ -70,6 +70,4 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             {children}
         </AuthContext.Provider>
     );
-};
-
-export default AuthContext;
+}

@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext';
 
 const UserRoute = ({ children }: { children: ReactNode }) => {
     const location = useLocation();
-    const { isAuthenticated, user } = useAuth();
+    const { isAuthenticated, user  } = useAuth();
 
     if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;

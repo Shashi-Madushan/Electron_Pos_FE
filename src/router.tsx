@@ -1,9 +1,9 @@
-import { createBrowserRouter, Navigate } from "react-router-dom";
+import { createBrowserRouter ,Navigate } from "react-router-dom";
 import UserDashbord from "./components/UserDashbord";
 import LoginPage from "./pages/LoginPage";
 import { UserLayout } from "./layouts/UserLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
-import { useAuth } from './context/AuthContext';
+import { useAuth } from "./context/AuthContext";
 
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
@@ -26,7 +26,6 @@ import AdminRoute from "./components/admin/AdminRoute";
 // Root redirect based on authentication status
 const RootRedirect = () => {
   const { isAuthenticated, user } = useAuth();
-
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
@@ -45,7 +44,7 @@ const router = createBrowserRouter([
     path: "/login",
     element: <LoginPage />
   },
-  {
+    {
     path: "/",
     element: <RootRedirect />
   },
