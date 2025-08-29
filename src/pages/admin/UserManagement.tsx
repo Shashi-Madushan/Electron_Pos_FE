@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import * as UserManagementService from '../../services/admin/UserManagementService';
-import { registerUser } from '../../services/UserService';
+import { 
+  registerUser, 
+  getAllUsersAdmin, 
+  updateUserAdmin, 
+  deleteUserAdmin 
+} from '../../services/UserService';
 
 interface User {
     userId: number;
@@ -31,7 +35,7 @@ const UserManagement: React.FC = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await UserManagementService.getAllUsers();
+      const response = await getAllUsersAdmin();
       setUsers(response.userDTOList || []);
       setLoading(false);
     } catch (error) {
@@ -64,7 +68,7 @@ const UserManagement: React.FC = () => {
     try {
       if (selectedUser?.userId) {
         // Update existing user
-        await UserManagementService.updateUser(selectedUser.userId, {
+        await updateUserAdmin(selectedUser.userId, {
           userName: formData.userName,
           email: formData.email,
           role: formData.role,
@@ -95,7 +99,7 @@ const UserManagement: React.FC = () => {
   const handleDeleteConfirm = async () => {
     if (!userToDelete) return;
     try {
-      await UserManagementService.deleteUser(Number(userToDelete));
+      await deleteUserAdmin(Number(userToDelete));
       setShowDeleteConfirm(false);
       setUserToDelete(null);
       loadUsers();
@@ -106,7 +110,7 @@ const UserManagement: React.FC = () => {
 
   const handleToggleStatus = async (user: User) => {
     try {
-      await UserManagementService.updateUser(Number(user.userId), {
+      await updateUserAdmin(Number(user.userId), {
         ...user,
         isActive: !user.isActive
       });
@@ -276,8 +280,8 @@ const UserManagement: React.FC = () => {
                   required
                 >
                   <option value="">Select Role</option>
-                  <option value="admin">Admin</option>
-                  <option value="user">User</option>
+                  <option value="Admin">Admin</option>
+                  <option value="User">User</option>
                 </select>
               </div>
               <div className="flex justify-end gap-2">

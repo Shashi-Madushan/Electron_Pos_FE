@@ -2,7 +2,7 @@ import apiClient from "./ApiClient";
 
 export const saveBrand = async (brandData: any) => {
   try {
-    const response = await apiClient.post("/brands", brandData);
+    const response = await apiClient.post("/admin/brands", brandData);
     return response.data;
   } catch (error) {
     console.error("Saving brand failed:", error);
@@ -32,7 +32,7 @@ export const getBrandById = async (id: string | number) => {
 
 export const updateBrand = async (id: string | number, brandData: any) => {
   try {
-    const response = await apiClient.put(`/brands/${id}`, brandData);
+    const response = await apiClient.put(`/admin/brands/${id}`, brandData);
     return response.data;
   } catch (error) {
     console.error("Updating brand failed:", error);
@@ -42,7 +42,7 @@ export const updateBrand = async (id: string | number, brandData: any) => {
 
 export const deleteBrand = async (id: string | number) => {
   try {
-    const response = await apiClient.delete(`/brands/${id}`);
+    const response = await apiClient.delete(`/admin/brands/${id}`);
     return response.data;
   } catch (error) {
     console.error("Deleting brand failed:", error);
