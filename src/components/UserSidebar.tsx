@@ -15,8 +15,8 @@ const UserSidebar = () => {
     const { logout, user } = useAuth();
     
     const menuItems = [
-        { path: '/dashboard', icon: <MdDashboard size={20} />, label: 'Dashboard', end: true },
         { path: '/dashboard/pos', icon: <MdPointOfSale size={20} />, label: 'POS' },
+        { path: '/dashboard', icon: <MdDashboard size={20} />, label: 'Dashboard', end: true },
         { path: '/dashboard/my-orders', icon: <MdShoppingBag size={20} />, label: 'My Orders' },
         { path: '/dashboard/inventory', icon: <MdInventory size={20} />, label: 'Inventory' },
         { path: '/dashboard/search', icon: <MdSearch size={20} />, label: 'Search Products' },
