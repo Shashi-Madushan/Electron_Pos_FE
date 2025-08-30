@@ -17,6 +17,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
   const tax = subtotal * 0.015;
   const total = subtotal + tax;
 
+  const formatLKR = (amount: number) => {
+    return `LKR ${amount.toFixed(2)}`;
+  };
+
   return (
     <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
       <h2 className="text-xl font-bold mb-4 text-black">Checkout</h2>
@@ -28,7 +32,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
             <div key={item.id} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
               <div className="flex-1">
                 <h3 className="text-black font-medium">{item.name}</h3>
-                <p className="text-blue-600">${item.price.toFixed(2)}</p>
+                <p className="text-blue-600">{formatLKR(item.price)}</p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -52,15 +56,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
       <div className="border-t border-gray-200 pt-4 mt-4">
         <div className="flex justify-between mb-2">
           <span className="text-gray-600">Subtotal</span>
-          <span className="font-medium">${subtotal.toFixed(2)}</span>
+          <span className="font-medium">{formatLKR(subtotal)}</span>
         </div>
         <div className="flex justify-between mb-2">
           <span className="text-gray-600">Tax (1.5%)</span>
-          <span className="font-medium">${tax.toFixed(2)}</span>
+          <span className="font-medium">{formatLKR(tax)}</span>
         </div>
         <div className="flex justify-between mb-4">
           <span className="font-bold text-black">Total</span>
-          <span className="font-bold text-blue-600">${total.toFixed(2)}</span>
+          <span className="font-bold text-blue-600">{formatLKR(total)}</span>
         </div>
         <div className="flex gap-2">
           <button className="flex-1 py-2 text-red-600 border border-red-100 rounded font-medium hover:bg-red-50 transition-colors">

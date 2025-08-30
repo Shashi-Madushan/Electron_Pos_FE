@@ -323,10 +323,10 @@ const Products: React.FC = () => {
                                             </span>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-black">${product.cost}</span>
+                                            <span className="text-black">LKR {product.cost}</span>
                                         </td>
                                         <td className="p-4">
-                                            <span className="text-black">${product.salePrice}</span>
+                                            <span className="text-black">LKR {product.salePrice}</span>
                                         </td>
                                         <td className="p-4">
                                             <span className="font-medium text-black">{product.qty}</span>
@@ -395,7 +395,7 @@ const Products: React.FC = () => {
                                             </div>
                                             <div className="mb-4">
                                                 <span className="text-black text-sm">Price: </span>
-                                                <span className="font-semibold text-blue-700">${product.salePrice}</span>
+                                                <span className="font-semibold text-blue-700">LKR {product.salePrice}</span>
                                             </div>
                                             <div className="flex gap-2">
                                                 <button

@@ -1,7 +1,7 @@
 import apiClient from "./ApiClient";
 
 export interface Category {
-  categoryId?: number; // optional for creation
+  categoryId?: string; // optional for creation
   name: string;
 }
 
