@@ -29,6 +29,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
 
   const stockStatus = getStockStatus(stock);
 
+  // Update button click handler
+  const handleClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (stock > 0) {
+      onAdd();
+    }
+  };
+
   // --- List View ---
   if (view === 'list') {
     return (
@@ -57,7 +65,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
           </div>
         </div>
         <button
-          onClick={onAdd}
+          onClick={handleClick}
           disabled={stock === 0}
           className={`px-5 py-2 rounded-lg font-semibold text-sm shadow transition-all duration-200 ${
             stock === 0
@@ -98,7 +106,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
         <h3 className="font-bold text-base text-gray-900 mb-2 line-clamp-2">{name}</h3>
         <div className="flex-1" />
         <button
-          onClick={onAdd}
+          onClick={handleClick}
           disabled={stock === 0}
           className={`w-full py-2 rounded-lg font-semibold text-sm mt-2 transition-all duration-200 ${
             stock === 0

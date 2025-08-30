@@ -5,12 +5,16 @@ import OrderSummary from '../components/OrderSummary';
 import { getAllCategories, type Category } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
 import { getAllProducts  } from '../services/ProductService';
+import AddToCartModal from '../components/AddToCartModal';
+import type { Product } from '../types/Product';
 
 interface OrderItem {
   id: string;
   name: string;
   price: number;
   quantity: number;
+  discount: number;
+  originalPrice: number;
 }
 
 interface Brand {
@@ -18,18 +22,6 @@ interface Brand {
   brandName: string;  // Changed from 'name' to 'brandName'
 }
 
-interface Product {
-  productId: string;
-  productName: string;
-  categoryId: number;
-  brandId: number;
-  cost: number;
-  salePrice: number;
-  qty: number;
-  isActive: boolean;
-  trackInventory: boolean;
-  image?: string;
-}
 
 
 const PosPage = () => {
@@ -41,6 +33,8 @@ const PosPage = () => {
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -88,23 +82,38 @@ const PosPage = () => {
     );
   };
 
-  const handleAddToOrder = (product: Product) => {
+  const handleAddToOrder = (product: Product, quantity: number, discount: number) => {
     setOrderItems(items => {
       const existingItem = items.find(item => item.id === product.productId);
       if (existingItem) {
         return items.map(item =>
           item.id === existingItem.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { 
+                ...item, 
+                quantity: item.quantity + quantity,
+                discount: discount,
+                originalPrice: product.salePrice,
+                price: product.salePrice * (1 - discount/100)
+              }
             : item
         );
       }
       return [...items, {
         id: product.productId,
         name: product.productName,
-        price: product.salePrice,
-        quantity: 1
+        originalPrice: product.salePrice,
+        price: product.salePrice * (1 - discount/100),
+        quantity: quantity,
+        discount: discount
       }];
     });
+    setIsQuantityModalOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleProductSelect = (product: Product) => {
+    setSelectedProduct(product);
+    setIsQuantityModalOpen(true);
   };
 
   return (
@@ -198,7 +207,7 @@ const PosPage = () => {
                   name={product.productName}
                   price={product.salePrice}
                   image={product.image || "/placeholder.jpg"}
-                  onAdd={() => handleAddToOrder(product)}
+                  onAdd={() => handleProductSelect(product)}
                   view={viewMode}
                   stock={product.qty}
                 />
@@ -215,6 +224,17 @@ const PosPage = () => {
           onUpdateQuantity={handleUpdateQuantity}
         />
       </div>
+
+      {isQuantityModalOpen && selectedProduct && (
+        <AddToCartModal
+          product={selectedProduct}
+          onClose={() => {
+            setIsQuantityModalOpen(false);
+            setSelectedProduct(null);
+          }}
+          onAdd={handleAddToOrder}
+        />
+      )}
     </div>
   );
 };

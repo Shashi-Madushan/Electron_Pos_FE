@@ -4,7 +4,9 @@ interface OrderItem {
   id: string;
   name: string;
   price: number;
+  originalPrice: number;
   quantity: number;
+  discount: number;
 }
 
 interface OrderSummaryProps {
@@ -13,6 +15,8 @@ interface OrderSummaryProps {
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) => {
+  const originalTotal = items.reduce((sum, item) => sum + item.originalPrice * item.quantity, 0);
+  const discountTotal = items.reduce((sum, item) => sum + (item.originalPrice - item.price) * item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
   const tax = subtotal * 0.015;
   const total = subtotal + tax;
@@ -32,7 +36,21 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
             <div key={item.id} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
               <div className="flex-1">
                 <h3 className="text-black font-medium">{item.name}</h3>
-                <p className="text-blue-600">{formatLKR(item.price)}</p>
+                <p className="text-blue-600">
+                  {item.discount > 0 ? (
+                    <>
+                      <span className="line-through text-gray-400 mr-2">
+                        {formatLKR(item.originalPrice)}
+                      </span>
+                      {formatLKR(item.price)}
+                    </>
+                  ) : (
+                    formatLKR(item.price)
+                  )}
+                  {item.discount > 0 && (
+                    <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2">
                 <button
@@ -54,6 +72,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
         )}
       </div>
       <div className="border-t border-gray-200 pt-4 mt-4">
+        <div className="flex justify-between mb-2">
+          <span className="text-gray-600">Original Total</span>
+          <span className="font-medium">{formatLKR(originalTotal)}</span>
+        </div>
+        <div className="flex justify-between mb-2 text-red-600">
+          <span>Total Discount</span>
+          <span>-{formatLKR(discountTotal)}</span>
+        </div>
         <div className="flex justify-between mb-2">
           <span className="text-gray-600">Subtotal</span>
           <span className="font-medium">{formatLKR(subtotal)}</span>
