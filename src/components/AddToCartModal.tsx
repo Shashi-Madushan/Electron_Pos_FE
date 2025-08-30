@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import type{ Product } from '../types/Product';
+import React, { useState, useRef, useEffect } from 'react';
+import type { Product } from '../types/Product';
+
 interface AddToCartModalProps {
   product: Product;
   onClose: () => void;
@@ -8,10 +9,28 @@ interface AddToCartModalProps {
 
 const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd }) => {
   const [quantity, setQuantity] = useState(1);
-  const [discount, setDiscount] = useState(0);
+  const [discount, setDiscount] = useState('');
+  const qtyRef = useRef<HTMLInputElement>(null);
+  const discountRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    qtyRef.current?.focus();
+  }, []);
+
+  const handleQtyKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      discountRef.current?.focus();
+    }
+  };
+
+  const handleDiscountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      onAdd(product, quantity, Number(discount) || 0);
+    }
+  };
 
   const originalTotal = product.salePrice * quantity;
-  const discountAmount = originalTotal * (discount / 100);
+  const discountAmount = originalTotal * (Number(discount) / 100);
   const finalTotal = originalTotal - discountAmount;
 
   return (
@@ -19,41 +38,58 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
       <div className="bg-white rounded-lg shadow-2xl w-full max-w-md">
         <div className="p-6">
           <h2 className="text-xl font-bold mb-4">{product.productName}</h2>
-          
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1">Quantity</label>
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                  className="px-3 py-1 bg-gray-100 rounded"
+                  className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
                 >-</button>
                 <input
+                  ref={qtyRef}
                   type="number"
                   min="1"
                   value={quantity}
-                  onChange={(e) => setQuantity(Math.max(1, parseInt(e.target.value) || 1))}
-                  className="w-20 text-center border rounded p-1"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (value === '') {
+                      setQuantity(1);
+                    } else {
+                      const parsedValue = parseInt(value);
+                      if (!isNaN(parsedValue)) {
+                        setQuantity(parsedValue);
+                      }
+                    }
+                  }}
+                  onKeyDown={handleQtyKeyDown}
+                  className="w-20 text-center border rounded p-2"
                 />
                 <button
                   onClick={() => setQuantity(quantity + 1)}
-                  className="px-3 py-1 bg-gray-100 rounded"
+                  className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
                 >+</button>
               </div>
             </div>
-
             <div>
               <label className="block text-sm font-medium mb-1">Discount (%)</label>
               <input
+                ref={discountRef}
                 type="number"
                 min="0"
                 max="100"
                 value={discount}
-                onChange={(e) => setDiscount(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
+                    setDiscount(value);
+                  }
+                }}
+                onKeyDown={handleDiscountKeyDown}
                 className="w-full border rounded p-2"
+                placeholder="Enter discount"
               />
             </div>
-
             <div className="space-y-2 pt-4">
               <div className="flex justify-between">
                 <span>Original Price:</span>
@@ -78,7 +114,6 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
             </div>
           </div>
         </div>
-        
         <div className="border-t p-4 flex gap-3">
           <button
             onClick={onClose}
@@ -87,7 +122,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
             Cancel
           </button>
           <button
-            onClick={() => onAdd(product, quantity, discount)}
+            onClick={() => onAdd(product, quantity, Number(discount) || 0)}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Add to Cart
