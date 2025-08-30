@@ -19,6 +19,7 @@ import Sales from "./pages/admin/Sales";
 // User Pages 
 import PosPage from "./pages/PosPage";
 import InventoryPage from "./pages/InventoryPage";
+import SalesHistoryPage from "./pages/SalesHistoryPage";
 // Route Guards
 import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -60,7 +61,7 @@ const router = createBrowserRouter([
     children: [
       { path: "", element: <UserDashbord /> },
       { path: "pos", element: <PosPage /> },
-      { path: "my-orders", element: <div>My Orders</div> },
+      { path: "my-orders", element: <SalesHistoryPage /> },
       { path: "profile", element: <div>Profile</div> },
       { path: "settings", element: <div>Account Settings</div> },
       { path: "inventory", element: <InventoryPage/>},

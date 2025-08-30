@@ -40,7 +40,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
   // --- List View ---
   if (view === 'list') {
     return (
-      <div className="flex items-center gap-6 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
+      <div
+        className="flex items-center gap-6 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300 cursor-pointer"
+        onClick={handleClick}
+        tabIndex={0}
+        role="button"
+        aria-disabled={stock === 0}
+      >
         <div className="relative flex-shrink-0 w-20 h-20 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
           {!imgError ? (
             <img
@@ -65,7 +71,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
           </div>
         </div>
         <button
-          onClick={handleClick}
+          onClick={e => { e.stopPropagation(); handleClick(e); }}
           disabled={stock === 0}
           className={`px-5 py-2 rounded-lg font-semibold text-sm shadow transition-all duration-200 ${
             stock === 0
@@ -81,7 +87,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
 
   // --- Grid View ---
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group relative">
+    <div
+      className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group relative cursor-pointer"
+      onClick={handleClick}
+      tabIndex={0}
+      role="button"
+      aria-disabled={stock === 0}
+    >
       <div className="relative w-full aspect-square bg-gray-50 flex items-center justify-center">
         {!imgError ? (
           <img
@@ -106,7 +118,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
         <h3 className="font-bold text-base text-gray-900 mb-2 line-clamp-2">{name}</h3>
         <div className="flex-1" />
         <button
-          onClick={handleClick}
+          onClick={e => { e.stopPropagation(); handleClick(e); }}
           disabled={stock === 0}
           className={`w-full py-2 rounded-lg font-semibold text-sm mt-2 transition-all duration-200 ${
             stock === 0

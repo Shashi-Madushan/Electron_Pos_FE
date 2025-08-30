@@ -8,7 +8,7 @@ interface AddToCartModalProps {
 }
 
 const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd }) => {
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState<number | ''>(1);
   const [discount, setDiscount] = useState('');
   const qtyRef = useRef<HTMLInputElement>(null);
   const discountRef = useRef<HTMLInputElement>(null);
@@ -25,11 +25,29 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
 
   const handleDiscountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onAdd(product, quantity, Number(discount) || 0);
+      onAdd(product, quantity === '' ? 1 : quantity, Number(discount) || 0);
     }
   };
 
-  const originalTotal = product.salePrice * quantity;
+  const handleQtyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    if (value === '') {
+      setQuantity('');
+    } else {
+      const parsedValue = parseInt(value);
+      if (!isNaN(parsedValue) && parsedValue > 0) {
+        setQuantity(parsedValue);
+      }
+    }
+  };
+
+  const handleQtyBlur = () => {
+    if (quantity === '' || quantity < 1) {
+      setQuantity(1);
+    }
+  };
+
+  const originalTotal = product.salePrice * (quantity === '' ? 1 : quantity);
   const discountAmount = originalTotal * (Number(discount) / 100);
   const finalTotal = originalTotal - discountAmount;
 
@@ -43,7 +61,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
               <label className="block text-sm font-medium mb-1">Quantity</label>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  onClick={() => setQuantity(Math.max(1, quantity === '' ? 1 : quantity - 1))}
                   className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
                 >-</button>
                 <input
@@ -51,22 +69,13 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
                   type="number"
                   min="1"
                   value={quantity}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (value === '') {
-                      setQuantity(1);
-                    } else {
-                      const parsedValue = parseInt(value);
-                      if (!isNaN(parsedValue)) {
-                        setQuantity(parsedValue);
-                      }
-                    }
-                  }}
+                  onChange={handleQtyChange}
+                  onBlur={handleQtyBlur}
                   onKeyDown={handleQtyKeyDown}
                   className="w-20 text-center border rounded p-2"
                 />
                 <button
-                  onClick={() => setQuantity(quantity + 1)}
+                  onClick={() => setQuantity(quantity === '' ? 1 : quantity + 1)}
                   className="px-3 py-1 bg-gray-100 rounded hover:bg-gray-200"
                 >+</button>
               </div>
@@ -97,7 +106,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
               </div>
               <div className="flex justify-between">
                 <span>Quantity:</span>
-                <span>×{quantity}</span>
+                <span>×{quantity === '' ? 1 : quantity}</span>
               </div>
               <div className="flex justify-between">
                 <span>Subtotal:</span>
@@ -122,7 +131,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
             Cancel
           </button>
           <button
-            onClick={() => onAdd(product, quantity, Number(discount) || 0)}
+            onClick={() => onAdd(product, quantity === '' ? 1 : quantity, Number(discount) || 0)}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
             Add to Cart

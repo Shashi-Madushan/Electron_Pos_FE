@@ -18,11 +18,28 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
   const originalTotal = items.reduce((sum, item) => sum + item.originalPrice * item.quantity, 0);
   const discountTotal = items.reduce((sum, item) => sum + (item.originalPrice - item.price) * item.quantity, 0);
   const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.015;
-  const total = subtotal + tax;
+  const total = subtotal;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
+  };
+
+  const handlePayNow = () => {
+    const orderSummary = {
+      items: items.map(item => ({
+        id: item.id,
+        name: item.name,
+        price: item.price,
+        originalPrice: item.originalPrice,
+        quantity: item.quantity,
+        discount: item.discount,
+      })),
+      originalTotal,
+      discountTotal,
+      subtotal,
+      total,
+    };
+    console.log('Order Summary:', orderSummary);
   };
 
   return (
@@ -84,10 +101,6 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
           <span className="text-gray-600">Subtotal</span>
           <span className="font-medium">{formatLKR(subtotal)}</span>
         </div>
-        <div className="flex justify-between mb-2">
-          <span className="text-gray-600">Tax (1.5%)</span>
-          <span className="font-medium">{formatLKR(tax)}</span>
-        </div>
         <div className="flex justify-between mb-4">
           <span className="font-bold text-black">Total</span>
           <span className="font-bold text-blue-600">{formatLKR(total)}</span>
@@ -96,7 +109,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) 
           <button className="flex-1 py-2 text-red-600 border border-red-100 rounded font-medium hover:bg-red-50 transition-colors">
             Cancel
           </button>
-          <button className="flex-1 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition-colors">
+          <button
+            className="flex-1 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition-colors"
+            onClick={handlePayNow}
+          >
             Pay Now
           </button>
         </div>
