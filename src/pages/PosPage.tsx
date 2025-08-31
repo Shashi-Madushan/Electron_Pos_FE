@@ -121,46 +121,43 @@ const PosPage = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full gap-4 overflow-hidden">
         {/* Header */}
-        <div className="bg-white shadow-sm rounded-lg p-6 border border-gray-200 flex flex-col gap-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-black">Point of Sale</h1>
-            <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
-              <button
-                onClick={() => setViewMode('grid')}
-                className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                  viewMode === 'grid'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-black hover:bg-gray-200'
-                }`}
-              >
-                <span className="inline-block mr-1 align-middle">
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor"/></svg>
-                </span>
-                Grid
-              </button>
-              <button
-                onClick={() => setViewMode('list')}
-                className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                  viewMode === 'list'
-                    ? 'bg-blue-600 text-white'
-                    : 'text-black hover:bg-gray-200'
-                }`}
-              >
-                <span className="inline-block mr-1 align-middle">
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="2" fill="currentColor"/><rect x="3" y="15" width="18" height="4" rx="2" fill="currentColor"/></svg>
-                </span>
-                List
-              </button>
-            </div>
+        <div className="bg-white shadow-sm rounded-lg px-4 py-2 border border-gray-200 flex items-center justify-between gap-2">
+          {/* Removed <h1> */}
+          <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
+            <button
+              onClick={() => setViewMode('grid')}
+              className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
+                viewMode === 'grid'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-black hover:bg-gray-200'
+              }`}
+            >
+              <span className="inline-block mr-1 align-middle">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor"/></svg>
+              </span>
+              Grid
+            </button>
+            <button
+              onClick={() => setViewMode('list')}
+              className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
+                viewMode === 'list'
+                  ? 'bg-blue-600 text-white'
+                  : 'text-black hover:bg-gray-200'
+              }`}
+            >
+              <span className="inline-block mr-1 align-middle">
+                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="2" fill="currentColor"/><rect x="3" y="15" width="18" height="4" rx="2" fill="currentColor"/></svg>
+              </span>
+              List
+            </button>
           </div>
-          {/* Search Bar */}
-          <div className="flex items-center mt-2">
+          <div className="flex items-center ml-4 flex-1 max-w-lg">
             <input
               type="text"
               placeholder="Search products..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base bg-gray-50"
+              className="w-full px-3 py-1 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-200 text-base bg-gray-50"
             />
           </div>
         </div>
