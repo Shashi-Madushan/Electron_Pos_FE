@@ -6,9 +6,10 @@ interface OrderSummaryProps {
   items: SaleItemDTO[];
   products: Product[];
   onUpdateQuantity: (productId: string, change: number) => void;
+  onRemoveItem: (productId: string) => void; // added prop
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQuantity }) => {
+const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQuantity, onRemoveItem }) => {
   // Helper to get product info
   const getProduct = (productId: number) => {
     return products.find(p => Number(p.productId) === productId);
@@ -74,6 +75,15 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
                     className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
                   >
                     +
+                  </button>
+
+                  {/* Remove button */}
+                  <button
+                    onClick={() => onRemoveItem(item.productId.toString())}
+                    className="ml-2 text-red-600 hover:text-red-800 px-2 py-1 rounded"
+                    aria-label={`Remove ${product?.productName || 'item'}`}
+                  >
+                    Remove
                   </button>
                 </div>
               </div>

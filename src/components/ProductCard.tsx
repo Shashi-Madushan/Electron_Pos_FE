@@ -61,7 +61,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
             </div>
           )}
           <span className={`absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-semibold ${stockStatus.color}`}>
-            {stockStatus.text}
+            {stockStatus.text} ({stock})
           </span>
         </div>
         <div className="flex-1 min-w-0">
@@ -108,7 +108,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
           </div>
         )}
         <span className={`absolute top-3 left-3 px-3 py-1 rounded text-xs font-semibold ${stockStatus.color} shadow`}>
-          {stockStatus.text}
+          {stockStatus.text} ({stock})
         </span>
         <span className="absolute top-3 right-3 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow">
           LKR {price.toFixed(2)}
