@@ -234,15 +234,19 @@ const PosPage = () => {
         </div>
 
         {/* Products Grid/List */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 flex-1 overflow-hidden">
-          <div className={`h-full overflow-y-auto transition-all ${
+        <div className="bg-white shadow-lg rounded-2xl p-4 border border-gray-100 flex-1 overflow-hidden">
+          <div className={`h-full overflow-y-auto p-2 ${
             viewMode === 'grid' 
-              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6 auto-rows-fr'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6'
               : 'flex flex-col gap-4'
           }`}>
             {filteredProducts.length === 0 ? (
-              <div className="col-span-full flex items-center justify-center h-48 text-gray-400 text-lg font-semibold">
-                No products found.
+              <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">
+                <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span className="text-lg font-medium">No products found</span>
+                <p className="text-sm mt-2">Try adjusting your search or filters</p>
               </div>
             ) : (
               filteredProducts.map((product) => (
