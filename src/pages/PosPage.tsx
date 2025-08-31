@@ -159,6 +159,10 @@ const PosPage = () => {
     }
   };
 
+  const handleRemoveItem = (productId: string) => {
+    setOrderItems(items => items.filter(item => item.productId !== Number(productId)));
+  };
+
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-white flex gap-4 p-4 overflow-hidden">
       {/* Main Content */}
@@ -263,6 +267,7 @@ const PosPage = () => {
           items={orderItems}
           products={products}
           onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveItem}
         />
         {/* Checkout Section */}
         <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
