@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';  // Add useRef import
 import ProductCard from '../components/ProductCard';
 import CategoryScroll from '../components/CategoryScroll';
 import OrderSummary from '../components/OrderSummary';
@@ -31,6 +31,7 @@ const PosPage = () => {
   const [customerId, _setCustomerId] = useState<number | null>(null);
   const [userId] = useState<number>(1); // Replace with actual user logic
   const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const barcodeInputRef = useRef<HTMLInputElement>(null!); // Changed from null to null!
 
   useEffect(() => {
     const fetchData = async () => {
@@ -174,6 +175,12 @@ const PosPage = () => {
 
   const handleRemoveItem = (productId: string) => {
     setOrderItems(items => items.filter(item => item.productId !== Number(productId)));
+  };
+
+  const focusBarcodeInput = () => {
+    setTimeout(() => {
+      barcodeInputRef.current?.focus();
+    }, 100);
   };
 
   return (
@@ -338,10 +345,12 @@ const PosPage = () => {
             setIsQuantityModalOpen(false);
             setSelectedProduct(null);
             setIsBarcodeModalOpen(true);
+            focusBarcodeInput();
           }}
           onAdd={(product, quantity, discount) => {
             handleAddToOrder(product, quantity, discount);
             setIsBarcodeModalOpen(true);
+            focusBarcodeInput();
           }}
         />
       )}
@@ -350,6 +359,7 @@ const PosPage = () => {
         isOpen={isBarcodeModalOpen}
         onClose={() => setIsBarcodeModalOpen(false)}
         onScan={handleBarcodeScan}
+        inputRef={barcodeInputRef}
       />
     </div>
   );

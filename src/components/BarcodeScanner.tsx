@@ -1,25 +1,33 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 
 interface BarcodeScannerProps {
   onClose: () => void;
   onScan: (barcode: string) => void;
   isOpen: boolean;
+  inputRef?: React.RefObject<HTMLInputElement>;  // Add this prop
 }
 
-const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onClose, onScan, isOpen }) => {
-  const inputRef = useRef<HTMLInputElement>(null);
+const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onClose, onScan, isOpen, inputRef }) => {
+  const [barcode, setBarcode] = useState('');
 
   useEffect(() => {
-    if (isOpen && inputRef.current) {
+    if (isOpen && inputRef?.current) {
       inputRef.current.focus();
     }
-  }, [isOpen]);
+  }, [isOpen, inputRef]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (inputRef.current?.value) {
-      onScan(inputRef.current.value);
-      inputRef.current.value = '';
+    if (barcode) {
+      onScan(barcode);
+      setBarcode('');
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e as any);
     }
   };
 
@@ -39,10 +47,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onClose, onScan, isOpen
         </div>
         <form onSubmit={handleSubmit}>
           <input
-            ref={inputRef}
+            ref={inputRef}  // Add the ref here
             type="text"
-            className="w-full p-3 border rounded focus:outline-none focus:ring-2 focus:ring-blue-200"
-            placeholder="Scan or enter barcode..."
+            value={barcode}
+            onChange={(e) => setBarcode(e.target.value)}
+            onKeyDown={handleKeyDown}
+            className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Scan or type barcode..."
+            autoFocus
             autoComplete="off"
           />
         </form>
