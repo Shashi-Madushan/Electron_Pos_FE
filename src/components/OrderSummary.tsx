@@ -52,59 +52,61 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
     <>
       <div className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col ${showConfirmation ? 'blur-sm' : ''}`}>
         <h2 className="text-xl font-bold mb-4 text-black">Checkout</h2>
-        <div className="flex-1 overflow-y-auto">
+        <div className="flex-1 overflow-y-auto min-h-0 max-h-[calc(100vh-24rem)]">
           {items.length === 0 ? (
             <div className="text-gray-500 text-center py-8">No items in order</div>
           ) : (
-            items.map((item) => {
-              const product = getProduct(item.productId);
-              return (
-                <div key={item.productId} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
-                  <div className="flex-1">
-                    <h3 className="text-black font-medium">{product?.productName || 'Unknown'}</h3>
-                    <p className="text-blue-600">
-                      {item.discount > 0 ? (
-                        <>
-                          <span className="line-through text-gray-400 mr-2">
-                            {formatLKR(product?.salePrice || 0)}
-                          </span>
-                          {formatLKR(item.price)}
-                        </>
-                      ) : (
-                        formatLKR(item.price)
-                      )}
-                      {item.discount > 0 && (
-                        <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
-                      )}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button
-                      onClick={() => onUpdateQuantity(item.productId.toString(), -1)}
-                      className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
-                    >
-                      -
-                    </button>
-                    <span className="w-8 text-center font-medium">{item.qty}</span>
-                    <button
-                      onClick={() => onUpdateQuantity(item.productId.toString(), 1)}
-                      className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
-                    >
-                      +
-                    </button>
+            <div className="space-y-2 pr-2">
+              {items.map((item) => {
+                const product = getProduct(item.productId);
+                return (
+                  <div key={item.productId} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
+                    <div className="flex-1">
+                      <h3 className="text-black font-medium">{product?.productName || 'Unknown'}</h3>
+                      <p className="text-blue-600">
+                        {item.discount > 0 ? (
+                          <>
+                            <span className="line-through text-gray-400 mr-2">
+                              {formatLKR(product?.salePrice || 0)}
+                            </span>
+                            {formatLKR(item.price)}
+                          </>
+                        ) : (
+                          formatLKR(item.price)
+                        )}
+                        {item.discount > 0 && (
+                          <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onUpdateQuantity(item.productId.toString(), -1)}
+                        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-medium">{item.qty}</span>
+                      <button
+                        onClick={() => onUpdateQuantity(item.productId.toString(), 1)}
+                        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
+                      >
+                        +
+                      </button>
 
-                    {/* Remove button */}
-                    <button
-                      onClick={() => handleRemoveClick(item.productId.toString())}
-                      className="ml-2 text-red-600 hover:text-red-800 px-2 py-1 rounded"
-                      aria-label={`Remove ${product?.productName || 'item'}`}
-                    >
-                      Remove
-                    </button>
+                      {/* Remove button */}
+                      <button
+                        onClick={() => handleRemoveClick(item.productId.toString())}
+                        className="ml-2 text-red-600 hover:text-red-800 px-2 py-1 rounded"
+                        aria-label={`Remove ${product?.productName || 'item'}`}
+                      >
+                        Remove
+                      </button>
+                    </div>
                   </div>
-                </div>
-              );
-            })
+                );
+              })}
+            </div>
           )}
         </div>
         <div className="border-t border-gray-200 pt-4 mt-4">
