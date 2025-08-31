@@ -154,13 +154,13 @@ const Reports: React.FC = () => {
                   <div className="bg-gray-50 p-4 rounded">
                     <h3 className="text-sm text-gray-500">Average Transaction Value</h3>
                     <p className="text-2xl font-bold">
-                      {salesData.averageTransactionValue ? `$${salesData.averageTransactionValue}` : '$0'}
+                      {salesData.averageTransactionValue ? `LKR ${salesData.averageTransactionValue}` : 'LKR 0'}
                     </p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded">
                     <h3 className="text-sm text-gray-500">Total Revenue</h3>
                     <p className="text-2xl font-bold">
-                      {salesData.totalRevenue ? `$${salesData.totalRevenue}` : '$0'}
+                      {salesData.totalRevenue ? `LKR ${salesData.totalRevenue}` : 'LKR 0'}
                     </p>
                   </div>
                 </div>
@@ -182,19 +182,19 @@ const Reports: React.FC = () => {
                   <div className="bg-gray-50 p-4 rounded">
                     <h3 className="text-sm text-gray-500">Net Profit</h3>
                     <p className="text-2xl font-bold">
-                      {profitData.netProfit ? `$${profitData.netProfit}` : '$0'}
+                      {profitData.netProfit ? `LKR ${profitData.netProfit}` : 'LKR 0'}
                     </p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded">
                     <h3 className="text-sm text-gray-500">Total Revenue</h3>
                     <p className="text-2xl font-bold">
-                      {profitData.totalRevenue ? `$${profitData.totalRevenue}` : '$0'}
+                      {profitData.totalRevenue ? `LKR ${profitData.totalRevenue}` : 'LKR 0'}
                     </p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded">
                     <h3 className="text-sm text-gray-500">Total Cost</h3>
                     <p className="text-2xl font-bold">
-                      {profitData.totalCost ? `$${profitData.totalCost}` : '$0'}
+                      {profitData.totalCost ? `LKR ${profitData.totalCost}` : 'LKR 0'}
                     </p>
                   </div>
                 </div>

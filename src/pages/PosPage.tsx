@@ -8,6 +8,7 @@ import { getAllProducts  } from '../services/ProductService';
 import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
 import type { SaleDTO, SaleItemDTO } from '../types/Sale';
+import { saveSale } from '../services/SaleService';
 
 interface Brand {
   brandId: string | number;
@@ -127,14 +128,17 @@ const PosPage = () => {
   const prepareSaleDTO = (): SaleDTO => {
     const { totalAmount, totalDiscount } = getTotals();
     return {
-      saleDate: new Date().toISOString(),
+      saleId: null,
+      saleDate: null,
       totalAmount,
       totalDiscount,
       paymentMethod,
       userId,
       customerId,
       saleItems: orderItems.map(item => ({
-        productId: item.productId, // Changed from item.saleId to item.productId
+        saleItemId: null,
+        saleId: null,
+        productId: item.productId,
         qty: item.qty,
         price: item.price,
         discount: item.discount,
@@ -142,14 +146,17 @@ const PosPage = () => {
     };
   };
 
-  // Placeholder for sending sale to backend
+  // Updated handleCheckout function with detailed logging
   const handleCheckout = async () => {
     const saleDTO = prepareSaleDTO();
-    // TODO: Replace with actual API call
-    console.log('Sending sale:', saleDTO);
-    // Example:
-    // await sendSale(saleDTO);
-    // setOrderItems([]);
+    try {
+      const response = await saveSale(saleDTO);
+      if (response.statusCode === 201) {
+        setOrderItems([]); // Clear the order items
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+    }
   };
 
   return (

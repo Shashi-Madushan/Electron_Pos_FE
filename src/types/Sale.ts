@@ -9,7 +9,7 @@ export interface SaleItemDTO {
 
 export interface SaleDTO {
   saleId?: number | null;
-  saleDate: string;
+  saleDate: string |null;
   totalAmount: number;
   totalDiscount: number;
   paymentMethod: string;
@@ -17,3 +17,4 @@ export interface SaleDTO {
   customerId: number | null;
   saleItems: SaleItemDTO[];
 }
+
