@@ -7,34 +7,27 @@ import { getAllBrands } from '../services/BrandService';
 import { getAllProducts  } from '../services/ProductService';
 import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  quantity: number;
-  discount: number;
-  originalPrice: number;
-}
+import type { SaleDTO, SaleItemDTO } from '../types/Sale';
 
 interface Brand {
   brandId: string | number;
   brandName: string;  // Changed from 'name' to 'brandName'
 }
 
-
-
 const PosPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedBrand, setSelectedBrand] = useState('all');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
-  const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
+  const [orderItems, setOrderItems] = useState<SaleItemDTO[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState('CASH');
+  const [customerId, _setCustomerId] = useState<number | null>(null);
+  const [userId] = useState<number>(1); // Replace with actual user logic
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,40 +65,42 @@ const PosPage = () => {
     return categoryMatch && brandMatch && searchMatch;
   });
 
-  const handleUpdateQuantity = (id: string, change: number) => {
-    setOrderItems(items => 
-      items.map(item => 
-        item.id === id 
-          ? { ...item, quantity: Math.max(0, item.quantity + change) }
-          : item
-      ).filter(item => item.quantity > 0)
+  const handleUpdateQuantity = (productId: string, change: number) => {
+    setOrderItems(items =>
+      items
+        .map(item =>
+          item.productId === Number(productId)
+            ? { ...item, qty: Math.max(0, item.qty + change) }
+            : item
+        )
+        .filter(item => item.qty > 0)
     );
   };
 
   const handleAddToOrder = (product: Product, quantity: number, discount: number) => {
     setOrderItems(items => {
-      const existingItem = items.find(item => item.id === product.productId);
+      const existingItem = items.find(item => item.productId === Number(product.productId));
       if (existingItem) {
         return items.map(item =>
-          item.id === existingItem.id
-            ? { 
-                ...item, 
-                quantity: item.quantity + quantity,
+          item.productId === Number(product.productId)
+            ? {
+                ...item,
+                qty: item.qty + quantity,
                 discount: discount,
-                originalPrice: product.salePrice,
-                price: product.salePrice * (1 - discount/100)
+                price: product.salePrice * (1 - discount / 100),
               }
             : item
         );
       }
-      return [...items, {
-        id: product.productId,
-        name: product.productName,
-        originalPrice: product.salePrice,
-        price: product.salePrice * (1 - discount/100),
-        quantity: quantity,
-        discount: discount
-      }];
+      return [
+        ...items,
+        {
+          productId: Number(product.productId),
+          qty: quantity,
+          price: product.salePrice * (1 - discount / 100),
+          discount: discount,
+        },
+      ];
     });
     setIsQuantityModalOpen(false);
     setSelectedProduct(null);
@@ -114,6 +109,47 @@ const PosPage = () => {
   const handleProductSelect = (product: Product) => {
     setSelectedProduct(product);
     setIsQuantityModalOpen(true);
+  };
+
+  // Helper to calculate totals
+  const getTotals = () => {
+    let totalAmount = 0;
+    let totalDiscount = 0;
+    orderItems.forEach(item => {
+      const originalPrice = products.find(p => Number(p.productId) === item.productId)?.salePrice || 0;
+      totalAmount += item.price * item.qty;
+      totalDiscount += (originalPrice - item.price) * item.qty;
+    });
+    return { totalAmount, totalDiscount };
+  };
+
+  // Prepare SaleDTO for sending
+  const prepareSaleDTO = (): SaleDTO => {
+    const { totalAmount, totalDiscount } = getTotals();
+    return {
+      saleDate: new Date().toISOString(),
+      totalAmount,
+      totalDiscount,
+      paymentMethod,
+      userId,
+      customerId,
+      saleItems: orderItems.map(item => ({
+        productId: item.productId, // Changed from item.saleId to item.productId
+        qty: item.qty,
+        price: item.price,
+        discount: item.discount,
+      })),
+    };
+  };
+
+  // Placeholder for sending sale to backend
+  const handleCheckout = async () => {
+    const saleDTO = prepareSaleDTO();
+    // TODO: Replace with actual API call
+    console.log('Sending sale:', saleDTO);
+    // Example:
+    // await sendSale(saleDTO);
+    // setOrderItems([]);
   };
 
   return (
@@ -215,11 +251,42 @@ const PosPage = () => {
       </div>
 
       {/* Order Summary */}
-      <div className="w-96 h-full">
+      <div className="w-96 h-full flex flex-col">
         <OrderSummary
           items={orderItems}
+          products={products}
           onUpdateQuantity={handleUpdateQuantity}
         />
+        {/* Checkout Section */}
+        <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+          <div className="mb-2">
+            <label className="block text-sm font-medium mb-1">Payment Method</label>
+            <select
+              value={paymentMethod}
+              onChange={e => setPaymentMethod(e.target.value)}
+              className="w-full border rounded px-2 py-1"
+            >
+              <option value="CASH">Cash</option>
+              <option value="CARD">Card</option>
+              <option value="OTHER">Other</option>
+            </select>
+          </div>
+          <div className="flex gap-2">
+            <button
+              className="flex-1 py-2 text-red-600 border border-red-100 rounded font-medium hover:bg-red-50 transition-colors"
+              onClick={() => setOrderItems([])}
+            >
+              Cancel
+            </button>
+            <button
+              className="flex-1 bg-blue-600 text-white rounded py-2 font-semibold hover:bg-blue-700"
+              onClick={handleCheckout}
+              disabled={orderItems.length === 0}
+            >
+              Checkout
+            </button>
+          </div>
+        </div>
       </div>
 
       {isQuantityModalOpen && selectedProduct && (
