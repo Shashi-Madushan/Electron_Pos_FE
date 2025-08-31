@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';  // Add useRef import
 import ProductCard from '../components/ProductCard';
 import CategoryScroll from '../components/CategoryScroll';
 import OrderSummary from '../components/OrderSummary';
@@ -9,6 +9,7 @@ import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
 import type { SaleDTO, SaleItemDTO } from '../types/Sale';
 import { saveSale } from '../services/SaleService';
+import BarcodeScanner from '../components/BarcodeScanner';
 
 interface Brand {
   brandId: string | number;
@@ -29,6 +30,8 @@ const PosPage = () => {
   const [paymentMethod, setPaymentMethod] = useState('CASH');
   const [customerId, _setCustomerId] = useState<number | null>(null);
   const [userId] = useState<number>(1); // Replace with actual user logic
+  const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+  const barcodeInputRef = useRef<HTMLInputElement>(null!); // Changed from null to null!
 
   useEffect(() => {
     const fetchData = async () => {
@@ -112,6 +115,17 @@ const PosPage = () => {
     setIsQuantityModalOpen(true);
   };
 
+  const handleBarcodeScan = async (barcode: string) => {
+    const product = products.find(p => p.barcode === barcode);
+    if (product) {
+      setSelectedProduct(product);
+      setIsQuantityModalOpen(true);
+    } else {
+      // Show error notification or alert
+      alert('Product not found');
+    }
+  };
+
   // Helper to calculate totals
   const getTotals = () => {
     let totalAmount = 0;
@@ -159,41 +173,63 @@ const PosPage = () => {
     }
   };
 
+  const handleRemoveItem = (productId: string) => {
+    setOrderItems(items => items.filter(item => item.productId !== Number(productId)));
+  };
+
+  const focusBarcodeInput = () => {
+    setTimeout(() => {
+      barcodeInputRef.current?.focus();
+    }, 100);
+  };
+
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-white flex gap-4 p-4 overflow-hidden">
       {/* Main Content */}
       <div className="flex-1 flex flex-col h-full gap-4 overflow-hidden">
         {/* Header */}
         <div className="bg-white shadow-sm rounded-lg px-4 py-2 border border-gray-200 flex items-center justify-between gap-2">
-          {/* Removed <h1> */}
-          <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
+          <div className="flex items-center gap-4">
+            {/* Simplified Barcode Scanner Button */}
             <button
-              onClick={() => setViewMode('grid')}
-              className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
-                viewMode === 'grid'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-black hover:bg-gray-200'
-              }`}
+              onClick={() => setIsBarcodeModalOpen(true)}
+              className="px-4 py-2 rounded-lg font-medium transition-all duration-200 bg-blue-600 text-white hover:bg-blue-700"
             >
-              <span className="inline-block mr-1 align-middle">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor"/></svg>
-              </span>
-              Grid
+              Scan Barcode
             </button>
-            <button
-              onClick={() => setViewMode('list')}
-              className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
-                viewMode === 'list'
-                  ? 'bg-blue-600 text-white'
-                  : 'text-black hover:bg-gray-200'
-              }`}
-            >
-              <span className="inline-block mr-1 align-middle">
-                <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="2" fill="currentColor"/><rect x="3" y="15" width="18" height="4" rx="2" fill="currentColor"/></svg>
-              </span>
-              List
-            </button>
+
+            {/* Existing view mode toggle */}
+            <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
+              <button
+                onClick={() => setViewMode('grid')}
+                className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
+                  viewMode === 'grid'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-black hover:bg-gray-200'
+                }`}
+              >
+                <span className="inline-block mr-1 align-middle">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="3" width="7" height="7" rx="2" fill="currentColor"/><rect x="14" y="14" width="7" height="7" rx="2" fill="currentColor"/><rect x="3" y="14" width="7" height="7" rx="2" fill="currentColor"/></svg>
+                </span>
+                Grid
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                className={`px-3 py-1 rounded transition-all duration-300 text-sm font-medium ${
+                  viewMode === 'list'
+                    ? 'bg-blue-600 text-white'
+                    : 'text-black hover:bg-gray-200'
+                }`}
+              >
+                <span className="inline-block mr-1 align-middle">
+                  <svg width="16" height="16" fill="none" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="4" rx="2" fill="currentColor"/><rect x="3" y="15" width="18" height="4" rx="2" fill="currentColor"/></svg>
+                </span>
+                List
+              </button>
+            </div>
           </div>
+          
+          {/* Search input - always visible now */}
           <div className="flex items-center ml-4 flex-1 max-w-lg">
             <input
               type="text"
@@ -230,15 +266,19 @@ const PosPage = () => {
         </div>
 
         {/* Products Grid/List */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 border border-gray-100 flex-1 overflow-hidden">
-          <div className={`h-full overflow-y-auto transition-all ${
+        <div className="bg-white shadow-lg rounded-2xl p-4 border border-gray-100 flex-1 overflow-hidden">
+          <div className={`h-full overflow-y-auto p-2 ${
             viewMode === 'grid' 
-              ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 2xl:grid-cols-5 gap-6 auto-rows-fr'
+              ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-6'
               : 'flex flex-col gap-4'
           }`}>
             {filteredProducts.length === 0 ? (
-              <div className="col-span-full flex items-center justify-center h-48 text-gray-400 text-lg font-semibold">
-                No products found.
+              <div className="col-span-full flex flex-col items-center justify-center h-64 text-gray-400">
+                <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+                <span className="text-lg font-medium">No products found</span>
+                <p className="text-sm mt-2">Try adjusting your search or filters</p>
               </div>
             ) : (
               filteredProducts.map((product) => (
@@ -263,6 +303,7 @@ const PosPage = () => {
           items={orderItems}
           products={products}
           onUpdateQuantity={handleUpdateQuantity}
+          onRemoveItem={handleRemoveItem}
         />
         {/* Checkout Section */}
         <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
@@ -296,16 +337,30 @@ const PosPage = () => {
         </div>
       </div>
 
+      {/* Modals */}
       {isQuantityModalOpen && selectedProduct && (
         <AddToCartModal
           product={selectedProduct}
           onClose={() => {
             setIsQuantityModalOpen(false);
             setSelectedProduct(null);
+            setIsBarcodeModalOpen(true);
+            focusBarcodeInput();
           }}
-          onAdd={handleAddToOrder}
+          onAdd={(product, quantity, discount) => {
+            handleAddToOrder(product, quantity, discount);
+            setIsBarcodeModalOpen(true);
+            focusBarcodeInput();
+          }}
         />
       )}
+
+      <BarcodeScanner
+        isOpen={isBarcodeModalOpen}
+        onClose={() => setIsBarcodeModalOpen(false)}
+        onScan={handleBarcodeScan}
+        inputRef={barcodeInputRef}
+      />
     </div>
   );
 };

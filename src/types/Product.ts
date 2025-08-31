@@ -1,5 +1,6 @@
 export interface Product {
   productId: string;
+  barcode: string;  // Added barcode field
   productName: string;
   categoryId: number;
   brandId: number;
