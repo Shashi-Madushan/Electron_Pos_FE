@@ -8,7 +8,7 @@ import { useAuth } from "./context/AuthContext";
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
-import SystemSettings from "./pages/admin/SystemSettings";
+import { SystemSettings } from "./pages/admin/SystemSettings";
 import Reports from "./pages/admin/Reports";
 import Inventory from "./pages/admin/Inventory";
 import Categories from "./pages/admin/Categories";

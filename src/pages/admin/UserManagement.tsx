@@ -28,8 +28,13 @@ const UserManagement: React.FC = () => {
     password: '',
     isActive: true
   });
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [passwordUser, setPasswordUser] = useState<User | null>(null);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
 
-  useEffect(() => {
+
+    useEffect(() => {
     loadUsers();
   }, []);
 
@@ -181,20 +186,31 @@ const UserManagement: React.FC = () => {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button 
-                      onClick={() => handleEditUser(user)}
-                      className="text-blue-600 hover:text-blue-900 mr-2"
-                    >
-                      Edit
-                    </button>
-                    <button 
-                      onClick={() => handleDeleteClick(user.userId.toString())}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      Delete
-                    </button>
-                  </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                        <button
+                            onClick={() => handleEditUser(user)}
+                            className="text-blue-600 hover:text-blue-900 mr-2"
+                        >
+                            Edit
+                        </button>
+                        <button
+                            onClick={() => handleDeleteClick(user.userId.toString())}
+                            className="text-red-600 hover:text-red-900 mr-2"
+                        >
+                            Delete
+                        </button>
+                        <button
+                            onClick={() => {
+                                setPasswordUser(user);
+                                setNewPassword('');
+                                setConfirmPassword('');
+                                setShowPasswordModal(true);
+                            }}
+                            className="text-green-600 hover:text-green-900"
+                        >
+                            Change Password
+                        </button>
+                    </td>
                 </tr>
               ))
             ) : (
@@ -303,6 +319,75 @@ const UserManagement: React.FC = () => {
           </div>
         </div>
       )}
+
+        {showPasswordModal && passwordUser && (
+            <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-20">
+                <div className="bg-white/90 p-6 rounded-lg w-96 shadow-xl backdrop-blur-md">
+                    <h3 className="text-lg font-semibold mb-4">Change Password</h3>
+
+                    <div className="space-y-4">
+                        {/* Username (readonly) */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Username</label>
+                            <input
+                                type="text"
+                                value={passwordUser.userName}
+                                readOnly
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2 bg-gray-100"
+                            />
+                        </div>
+
+                        {/* New Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">New Password</label>
+                            <input
+                                type="password"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                placeholder="Enter new password"
+                            />
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+                            <input
+                                type="password"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm p-2"
+                                placeholder="Confirm new password"
+                            />
+                        </div>
+                    </div>
+
+                    {/* Buttons */}
+                    <div className="mt-6 flex justify-end space-x-3">
+                        <button
+                            onClick={() => setShowPasswordModal(false)}
+                            className="px-4 py-2 border border-gray-300 rounded-md hover:bg-gray-50"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            onClick={() => {
+                                if (newPassword !== confirmPassword) {
+                                    alert("Passwords do not match!");
+                                    return;
+                                }
+                                console.log("Password updated for:", passwordUser.userName, newPassword);
+                                // TODO: call API here to update password
+                                setShowPasswordModal(false);
+                            }}
+                            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+                        >
+                            Update Password
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )}
     </div>
   );
 };
