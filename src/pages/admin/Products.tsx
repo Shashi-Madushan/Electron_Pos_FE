@@ -1,10 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { getAllCategories } from '../../services/CategoryService';
 import { getAllBrands } from '../../services/BrandService';
 import { deleteProduct, getAllProducts, saveProduct, updateProduct } from '../../services/ProductService';
+import Barcode from 'react-barcode';
+import { toPng } from 'html-to-image';
+import { saveAs } from 'file-saver';
 
 interface Product {
     productId: string;
+    barcode: string;
     productName: string;
     categoryId: number;
     brandId: number;
@@ -39,8 +43,13 @@ const Products: React.FC = () => {
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
     const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
+    const [isBarcodeModalOpen, setIsBarcodeModalOpen] = useState(false);
+    const [selectedProductForBarcode, setSelectedProductForBarcode] = useState<Product | null>(null);
+    const barcodeRef = useRef<HTMLDivElement>(null);
+
     const [newProduct, setNewProduct] = useState<Product>({
         productId: '',
+        barcode: '',
         productName: '',
         categoryId: 0,
         brandId: 0,
@@ -167,6 +176,7 @@ const Products: React.FC = () => {
     const resetModal = () => {
         setNewProduct({
             productId: '',
+            barcode: '',
             productName: '',
             categoryId: 0,
             brandId: 0,
@@ -186,6 +196,43 @@ const Products: React.FC = () => {
             setNewProduct({ ...newProduct, image: reader.result as string });
         };
         reader.readAsDataURL(file);
+    };
+
+    const handleGenerateBarcodeClick = (product: Product) => {
+        setSelectedProductForBarcode(product);
+        setIsBarcodeModalOpen(true);
+    };
+
+    const handleSaveBarcode = () => {
+        if (barcodeRef.current === null || !selectedProductForBarcode) {
+            return;
+        }
+
+        toPng(barcodeRef.current, { cacheBust: true })
+            .then((dataUrl) => {
+                saveAs(dataUrl, `${selectedProductForBarcode.barcode || 'barcode'}.png`);
+            })
+            .catch((err) => {
+                console.error('Failed to generate barcode image', err);
+            });
+    };
+
+    const handlePrintBarcode = () => {
+        if (barcodeRef.current === null) {
+            return;
+        }
+        const printWindow = window.open('', '', 'height=400,width=800');
+        if (printWindow) {
+            printWindow.document.write('<html><head><title>Print Barcode</title>');
+            printWindow.document.write('<style>body { display: flex; align-items: center; justify-content: center; height: 100%; margin: 0; }</style>');
+            printWindow.document.write('</head><body>');
+            printWindow.document.write(barcodeRef.current.innerHTML);
+            printWindow.document.write('</body></html>');
+            printWindow.document.close();
+            printWindow.focus();
+            printWindow.print();
+            printWindow.close();
+        }
     };
 
 
@@ -280,6 +327,7 @@ const Products: React.FC = () => {
                                 <thead className='sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200'>
                                 <tr>
                                     <th className="p-4 text-left font-semibold">Product</th>
+                                    <th className="p-4 text-left font-semibold">Barcode</th>
                                     <th className="p-4 text-left font-semibold">Category</th>
                                     <th className="p-4 text-left font-semibold">Brand</th>
                                     <th className="p-4 text-left font-semibold">Cost</th>
@@ -313,6 +361,9 @@ const Products: React.FC = () => {
                                             </div>
                                         </td>
                                         <td className="p-4">
+                                            <span className="text-black">{product.barcode}</span>
+                                        </td>
+                                        <td className="p-4">
                                             <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
                                                 {getCategoryName(product.categoryId)}
                                             </span>
@@ -344,6 +395,12 @@ const Products: React.FC = () => {
                                                     className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
                                                 >
                                                     Delete
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGenerateBarcodeClick(product)}
+                                                    className="text-green-600 px-3 py-1 text-sm font-medium border border-green-100 rounded hover:bg-green-50"
+                                                >
+                                                    Generate
                                                 </button>
                                             </div>
                                         </td>
@@ -409,6 +466,12 @@ const Products: React.FC = () => {
                                                     className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
                                                 >
                                                     Delete
+                                                </button>
+                                                <button
+                                                    onClick={() => handleGenerateBarcodeClick(product)}
+                                                    className="text-green-600 px-3 py-1 text-sm font-medium border border-green-100 rounded hover:bg-green-50"
+                                                >
+                                                    Generate
                                                 </button>
                                             </div>
                                         </div>
@@ -571,6 +634,50 @@ const Products: React.FC = () => {
                                 className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium"
                             >
                                 {editingProduct ? 'Update Product' : 'Add Product'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Barcode Modal */}
+            {isBarcodeModalOpen && selectedProductForBarcode && (
+                <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+                    <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200">
+                        <div className="border-b border-gray-200 px-6 py-4">
+                            <h2 className="text-xl font-semibold text-black">
+                                Barcode for {selectedProductForBarcode.productName}
+                            </h2>
+                        </div>
+                        <div className="p-6 flex flex-col items-center justify-center">
+                            {selectedProductForBarcode.barcode ? (
+                                <div ref={barcodeRef} className="bg-white p-4 inline-block">
+                                    <Barcode value={selectedProductForBarcode.barcode} />
+                                </div>
+                            ) : (
+                                <p className="text-gray-500">No barcode available for this product.</p>
+                            )}
+                        </div>
+                        <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+                            <button
+                                onClick={() => setIsBarcodeModalOpen(false)}
+                                className="flex-1 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 font-medium"
+                            >
+                                Close
+                            </button>
+                            <button
+                                onClick={handleSaveBarcode}
+                                disabled={!selectedProductForBarcode.barcode}
+                                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium disabled:bg-gray-400"
+                            >
+                                Save
+                            </button>
+                            <button
+                                onClick={handlePrintBarcode}
+                                disabled={!selectedProductForBarcode.barcode}
+                                className="flex-1 bg-green-600 text-white py-2 rounded hover:bg-green-700 font-medium disabled:bg-gray-400"
+                            >
+                                Print
                             </button>
                         </div>
                     </div>
