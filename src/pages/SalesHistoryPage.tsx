@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { getSaleById } from '../services/SaleService';
+import { getSaleByUserId } from '../services/SaleService';
 import { useAuth } from '../context/AuthContext';
 interface Sale {
     saleId: number;
@@ -36,7 +36,7 @@ const SalesHistoryPage: React.FC = () => {
     const fetchSales = async (userId: number) => {
         setLoading(true);
         try {
-            const response: SaleResponse = await getSaleById(userId);
+            const response: SaleResponse = await getSaleByUserId(userId);
             setSales(response.saleDTOList || []);
         } catch (err: any) {
             setError(err.message || 'Failed to fetch sales');

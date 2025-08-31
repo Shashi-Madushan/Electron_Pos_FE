@@ -1,6 +1,6 @@
 import apiClient from "./ApiClient";
-
-export const saveSale = async (saleData: any) => {
+import type { SaleDTO } from "../types/Sale";
+export const saveSale = async (saleData: SaleDTO) => {
   try {
     const response = await apiClient.post("/sales", saleData);
     return response.data;
@@ -30,6 +30,15 @@ export const getSaleById = async (id: string | number) => {
   }
 };
 
+export const getSaleByUserId = async (id: string | number) => {
+  try {
+    const response = await apiClient.get(`/sales/user/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching sale by ID failed:", error);
+    throw error;
+  }
+};
 export const updateSale = async (id: string | number, saleData: any) => {
   try {
     const response = await apiClient.put(`/sales/${id}`, saleData);
@@ -46,6 +55,26 @@ export const deleteSale = async (id: string | number) => {
     return response.data;
   } catch (error) {
     console.error("Deleting sale failed:", error);
+    throw error;
+  }
+};
+
+export const getSalesByDateRange = async (startDate: string, endDate: string) => {
+  try {
+    const response = await apiClient.get(`/sales/range?startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching sales by date range failed:", error);
+    throw error;
+  }
+};
+
+export const getAdminSalesStats = async () => {
+  try {
+    const response = await apiClient.get('/sales/stats');
+    return response.data;
+  } catch (error) {
+    console.error("Fetching sales stats failed:", error);
     throw error;
   }
 };
