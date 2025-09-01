@@ -8,7 +8,6 @@ import { useAuth } from "./context/AuthContext";
 // Admin Pages
 import AdminDashboard from "./pages/admin/AdminDashboard";
 import UserManagement from "./pages/admin/UserManagement";
-import { SystemSettings } from "./pages/admin/SystemSettings";
 import Reports from "./pages/admin/Reports";
 import Inventory from "./pages/admin/Inventory";
 import Categories from "./pages/admin/Categories";
@@ -22,6 +21,9 @@ import InventoryPage from "./pages/InventoryPage";
 // Route Guards
 import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
+import { SystemSettings } from "./pages/admin/SystemSettings";
+import { UserSettings } from "./pages/UserSetting";
+import { ReceiptDemoPage } from "./util/ReceiptDemoPage";
 
 // Root redirect based on authentication status
 const RootRedirect = () => {
@@ -48,6 +50,10 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootRedirect />
   },
+  {
+    path: "/bill",
+    element: <ReceiptDemoPage />
+  },
 
   // USER-PROTECTED ROUTES (Cashier / Regular User)
   {
@@ -62,8 +68,8 @@ const router = createBrowserRouter([
       { path: "pos", element: <PosPage /> },
       { path: "my-orders", element: <div>My Orders</div> },
       { path: "profile", element: <div>Profile</div> },
-      { path: "settings", element: <div>Account Settings</div> },
-      { path: "inventory", element: <InventoryPage/>},
+      { path: "settings", element: <UserSettings /> },
+      { path: "inventory", element: <InventoryPage /> },
       { path: "search", element: <div>Search Products</div> }
     ]
   },

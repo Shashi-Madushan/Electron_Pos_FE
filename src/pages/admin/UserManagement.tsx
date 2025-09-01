@@ -3,8 +3,9 @@ import {
   registerUser, 
   getAllUsersAdmin, 
   updateUserAdmin, 
-  deleteUserAdmin 
+  deleteUserAdmin,
 } from '../../services/UserService';
+import { toast } from 'react-toastify';
 
 interface User {
     userId: number;
@@ -124,6 +125,33 @@ const UserManagement: React.FC = () => {
       console.error('Error toggling user status:', error);
     }
   };
+
+  const handlePasswordUpdate = async () => {
+    if (!passwordUser) return;
+    
+    if (newPassword !== confirmPassword) {
+        toast.error("Passwords do not match!");
+        return;
+    }
+
+    if (newPassword.length < 6) {
+        toast.error("Password must be at least 6 characters long");
+        return;
+    }
+
+    try {
+      const updatedUser = { ...passwordUser, password: newPassword };
+      await updateUserAdmin(passwordUser.userId, updatedUser);
+      setPasswordUser(updatedUser);
+      toast.success("Password updated successfully");
+      setShowPasswordModal(false);
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (error) {
+        toast.error("Failed to update password");
+        console.error("Password update error:", error);
+    }
+};
 
   // Add error state for empty users
   if (loading) {
@@ -371,15 +399,7 @@ const UserManagement: React.FC = () => {
                             Cancel
                         </button>
                         <button
-                            onClick={() => {
-                                if (newPassword !== confirmPassword) {
-                                    alert("Passwords do not match!");
-                                    return;
-                                }
-                                console.log("Password updated for:", passwordUser.userName, newPassword);
-                                // TODO: call API here to update password
-                                setShowPasswordModal(false);
-                            }}
+                            onClick={handlePasswordUpdate}
                             className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
                         >
                             Update Password
