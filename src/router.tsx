@@ -1,5 +1,4 @@
 import { createBrowserRouter ,Navigate } from "react-router-dom";
-import UserDashbord from "./components/UserDashbord";
 import LoginPage from "./pages/LoginPage";
 import { UserLayout } from "./layouts/UserLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
@@ -13,11 +12,12 @@ import Inventory from "./pages/admin/Inventory";
 import Categories from "./pages/admin/Categories";
 import Brands from "./pages/admin/Brands";
 import Products from "./pages/admin/Products";
-import Sales from "./pages/admin/Sales";
-
+import AdminSalesPage from "./pages/admin/AdminSalesPage";
 // User Pages 
 import PosPage from "./pages/PosPage";
 import InventoryPage from "./pages/InventoryPage";
+import SalesHistoryPage from "./pages/SalesHistoryPage";
+import UserDashboard from "./pages/UserDashboard";
 // Route Guards
 import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
@@ -64,9 +64,9 @@ const router = createBrowserRouter([
       </UserRoute>
     ),
     children: [
-      { path: "", element: <UserDashbord /> },
+      { path: "", element: <UserDashboard /> },
       { path: "pos", element: <PosPage /> },
-      { path: "my-orders", element: <div>My Orders</div> },
+      { path: "my-orders", element: <SalesHistoryPage /> },
       { path: "profile", element: <div>Profile</div> },
       { path: "settings", element: <UserSettings /> },
       { path: "inventory", element: <InventoryPage /> },
@@ -95,7 +95,7 @@ const router = createBrowserRouter([
       { path: "brands", element: <Brands /> }, // Manage brands
       { path: "users", element: <UserManagement /> }, // Manage system users
       { path: "inventory", element: <Inventory /> }, // Manage inventory
-      { path: "sales", element: <Sales /> }, // Sales management
+      { path: "sales", element: <AdminSalesPage /> }, // Sales management
       { path: "reports", element: <Reports /> }, // Reports & analytics
       { path: "settings", element: <SystemSettings /> } // System configurations
     ]

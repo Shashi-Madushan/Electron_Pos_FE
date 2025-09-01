@@ -1,107 +1,162 @@
-import React from 'react';
-
-interface OrderItem {
-  id: string;
-  name: string;
-  price: number;
-  originalPrice: number;
-  quantity: number;
-  discount: number;
-}
+import React, { useState } from 'react';
+import type { SaleItemDTO } from '../types/Sale';
+import type { Product } from '../types/Product';
 
 interface OrderSummaryProps {
-  items: OrderItem[];
-  onUpdateQuantity: (id: string, change: number) => void;
+  items: SaleItemDTO[];
+  products: Product[];
+  onUpdateQuantity: (productId: string, change: number) => void;
+  onRemoveItem: (productId: string) => void; // added prop
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ items, onUpdateQuantity }) => {
-  const originalTotal = items.reduce((sum, item) => sum + item.originalPrice * item.quantity, 0);
-  const discountTotal = items.reduce((sum, item) => sum + (item.originalPrice - item.price) * item.quantity, 0);
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
-  const tax = subtotal * 0.015;
-  const total = subtotal + tax;
+const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQuantity, onRemoveItem }) => {
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+
+  // Helper to get product info
+  const getProduct = (productId: number) => {
+    return products.find(p => Number(p.productId) === productId);
+  };
+
+  const originalTotal = items.reduce((sum, item) => {
+    const product = getProduct(item.productId);
+    return sum + (product?.salePrice || 0) * item.qty;
+  }, 0);
+
+  const discountTotal = items.reduce((sum, item) => {
+    const product = getProduct(item.productId);
+    return sum + ((product?.salePrice || 0) - item.price) * item.qty;
+  }, 0);
+
+  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
+  const total = subtotal;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
   };
 
+  const handleRemoveClick = (productId: string) => {
+    setItemToRemove(productId);
+    setShowConfirmation(true);
+  };
+
+  const handleConfirmRemove = () => {
+    if (itemToRemove) {
+      onRemoveItem(itemToRemove);
+    }
+    setShowConfirmation(false);
+    setItemToRemove(null);
+  };
+
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col">
-      <h2 className="text-xl font-bold mb-4 text-black">Checkout</h2>
-      <div className="flex-1 overflow-y-auto">
-        {items.length === 0 ? (
-          <div className="text-gray-500 text-center py-8">No items in order</div>
-        ) : (
-          items.map((item) => (
-            <div key={item.id} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
-              <div className="flex-1">
-                <h3 className="text-black font-medium">{item.name}</h3>
-                <p className="text-blue-600">
-                  {item.discount > 0 ? (
-                    <>
-                      <span className="line-through text-gray-400 mr-2">
-                        {formatLKR(item.originalPrice)}
-                      </span>
-                      {formatLKR(item.price)}
-                    </>
-                  ) : (
-                    formatLKR(item.price)
-                  )}
-                  {item.discount > 0 && (
-                    <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
-                  )}
-                </p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => onUpdateQuantity(item.id, -1)}
-                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
-                >
-                  -
-                </button>
-                <span className="w-8 text-center font-medium">{item.quantity}</span>
-                <button
-                  onClick={() => onUpdateQuantity(item.id, 1)}
-                  className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
-                >
-                  +
-                </button>
-              </div>
+    <>
+      <div className={`bg-white p-4 rounded-lg shadow-sm border border-gray-200 h-full flex flex-col ${showConfirmation ? 'blur-sm' : ''}`}>
+        <h2 className="text-xl font-bold mb-4 text-black">Checkout</h2>
+        <div className="flex-1 overflow-y-auto min-h-0 max-h-[calc(100vh-24rem)]">
+          {items.length === 0 ? (
+            <div className="text-gray-500 text-center py-8">No items in order</div>
+          ) : (
+            <div className="space-y-2 pr-2">
+              {items.map((item) => {
+                const product = getProduct(item.productId);
+                return (
+                  <div key={item.productId} className="flex items-center gap-4 mb-4 p-2 hover:bg-gray-50 rounded">
+                    <div className="flex-1">
+                      <h3 className="text-black font-medium">{product?.productName || 'Unknown'}</h3>
+                      <p className="text-blue-600">
+                        {item.discount > 0 ? (
+                          <>
+                            <span className="line-through text-gray-400 mr-2">
+                              {formatLKR(product?.salePrice || 0)}
+                            </span>
+                            {formatLKR(item.price)}
+                          </>
+                        ) : (
+                          formatLKR(item.price)
+                        )}
+                        {item.discount > 0 && (
+                          <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onUpdateQuantity(item.productId.toString(), -1)}
+                        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
+                      >
+                        -
+                      </button>
+                      <span className="w-8 text-center font-medium">{item.qty}</span>
+                      <button
+                        onClick={() => onUpdateQuantity(item.productId.toString(), 1)}
+                        className="bg-gray-100 hover:bg-gray-200 px-3 py-1 rounded text-black"
+                      >
+                        +
+                      </button>
+
+                      {/* Remove button */}
+                      <button
+                        onClick={() => handleRemoveClick(item.productId.toString())}
+                        className="ml-2 text-red-600 hover:text-red-800 px-2 py-1 rounded"
+                        aria-label={`Remove ${product?.productName || 'item'}`}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-          ))
-        )}
-      </div>
-      <div className="border-t border-gray-200 pt-4 mt-4">
-        <div className="flex justify-between mb-2">
-          <span className="text-gray-600">Original Total</span>
-          <span className="font-medium">{formatLKR(originalTotal)}</span>
+          )}
         </div>
-        <div className="flex justify-between mb-2 text-red-600">
-          <span>Total Discount</span>
-          <span>-{formatLKR(discountTotal)}</span>
-        </div>
-        <div className="flex justify-between mb-2">
-          <span className="text-gray-600">Subtotal</span>
-          <span className="font-medium">{formatLKR(subtotal)}</span>
-        </div>
-        <div className="flex justify-between mb-2">
-          <span className="text-gray-600">Tax (1.5%)</span>
-          <span className="font-medium">{formatLKR(tax)}</span>
-        </div>
-        <div className="flex justify-between mb-4">
-          <span className="font-bold text-black">Total</span>
-          <span className="font-bold text-blue-600">{formatLKR(total)}</span>
-        </div>
-        <div className="flex gap-2">
-          <button className="flex-1 py-2 text-red-600 border border-red-100 rounded font-medium hover:bg-red-50 transition-colors">
-            Cancel
-          </button>
-          <button className="flex-1 py-2 bg-blue-600 text-white rounded font-medium hover:bg-blue-700 transition-colors">
-            Pay Now
-          </button>
+        <div className="border-t border-gray-200 pt-4 mt-4">
+          <div className="flex justify-between mb-2">
+            <span className="text-gray-600">Original Total</span>
+            <span className="font-medium">{formatLKR(originalTotal)}</span>
+          </div>
+          <div className="flex justify-between mb-2 text-red-600">
+            <span>Total Discount</span>
+            <span>-{formatLKR(discountTotal)}</span>
+          </div>
+          <div className="flex justify-between mb-2">
+            <span className="text-gray-600">Subtotal</span>
+            <span className="font-medium">{formatLKR(subtotal)}</span>
+          </div>
+          <div className="flex justify-between mb-4">
+            <span className="font-bold text-black">Total</span>
+            <span className="font-bold text-blue-600">{formatLKR(total)}</span>
+          </div>
         </div>
       </div>
-    </div>
+
+      {/* Confirmation Popup */}
+      {showConfirmation && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div 
+            className="fixed inset-0 bg-white/50 backdrop-blur-sm" 
+            onClick={() => setShowConfirmation(false)}
+          ></div>
+          <div className="bg-white p-6 rounded-lg shadow-xl z-10 max-w-md w-full mx-4">
+            <h3 className="text-lg font-semibold mb-4">Confirm Removal</h3>
+            <p className="text-gray-600 mb-6">Are you sure you want to remove this item from the order?</p>
+            <div className="flex justify-end gap-4">
+              <button
+                onClick={() => setShowConfirmation(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmRemove}
+                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

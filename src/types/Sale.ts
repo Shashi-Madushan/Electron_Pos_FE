@@ -1,3 +1,4 @@
+
 export type Currency = "LKR" | "USD" | "EUR" | string;
 
 export interface BusinessInfo {
@@ -26,3 +27,24 @@ export interface Sale {
     customerId: number;
     saleItems: SaleItem[];
 }
+export interface SaleItemDTO {
+  saleItemId?: number | null;
+  saleId?: number | null;
+  productId: number;
+  qty: number;
+  price: number;
+  totalPrice: number;
+  discount: number;
+}
+
+export interface SaleDTO {
+  saleId?: number | null;
+  saleDate: string |null;
+  totalAmount: number;
+  totalDiscount: number;
+  paymentMethod: string;
+  userId: number;
+  customerId: number | null;
+  saleItems: SaleItemDTO[];
+}
+

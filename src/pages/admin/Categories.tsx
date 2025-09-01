@@ -154,7 +154,7 @@ const CategoryPage: React.FC = () => {
                             Edit
                           </button>
                           <button
-                            onClick={() => handleDeleteCategory(category.categoryId)}
+                            onClick={() => handleDeleteCategory(Number(category.categoryId))}
                             className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
                           >
                             Delete
@@ -197,7 +197,7 @@ const CategoryPage: React.FC = () => {
                         Edit
                       </button>
                       <button
-                        onClick={() => handleDeleteCategory(category.categoryId)}
+                        onClick={() => handleDeleteCategory(Number(category.categoryId))}
                         className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
                       >
                         Delete

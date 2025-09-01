@@ -22,9 +22,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
   const [imgError, setImgError] = React.useState(false);
 
   const getStockStatus = (stock: number): { color: string; text: string } => {
-    if (stock === 0) return { color: 'bg-red-100 text-red-600', text: 'Out of Stock' };
-    if (stock < 10) return { color: 'bg-yellow-100 text-yellow-700', text: 'Low Stock' };
-    return { color: 'bg-green-100 text-green-700', text: 'In Stock' };
+    if (stock === 0) return { color: 'bg-red-50 text-red-700', text: 'Out of Stock' };
+    if (stock < 10) return { color: 'bg-amber-50 text-amber-700', text: 'Low Stock' };
+    return { color: 'bg-emerald-50 text-emerald-700', text: 'In Stock' };
   };
 
   const stockStatus = getStockStatus(stock);
@@ -40,40 +40,46 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
   // --- List View ---
   if (view === 'list') {
     return (
-      <div className="flex items-center gap-6 p-4 bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-lg transition-all duration-300">
-        <div className="relative flex-shrink-0 w-20 h-20 flex items-center justify-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden">
+      <div
+        className="flex items-center gap-8 p-5 bg-white border border-gray-200 rounded-2xl hover:border-blue-200 hover:shadow-md transition-all duration-300 cursor-pointer"
+        onClick={handleClick}
+        tabIndex={0}
+        role="button"
+        aria-disabled={stock === 0}
+      >
+        <div className="relative flex-shrink-0 w-24 h-24 flex items-center justify-center bg-slate-100 rounded-xl overflow-hidden">
           {!imgError ? (
             <img
               src={image}
               alt={name}
-              className="w-full h-full object-cover"
+              className="w-full h-full object-contain p-2"
               onError={() => setImgError(true)}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-pink-300 text-black text-3xl font-bold">
+            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-600 text-2xl font-semibold">
               {getInitials(name)}
             </div>
           )}
-          <span className={`absolute bottom-2 left-2 px-2 py-0.5 rounded text-xs font-semibold ${stockStatus.color}`}>
-            {stockStatus.text}
-          </span>
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="font-bold text-lg text-gray-900 truncate">{name}</h3>
-          <div className="flex items-center gap-2 mt-1">
-            <span className="bg-blue-50 text-blue-700 px-2 py-0.5 rounded text-base font-semibold">LKR {price.toFixed(2)}</span>
+          <h3 className="font-semibold text-lg text-gray-900 mb-2 truncate">{name}</h3>
+          <div className="flex items-center gap-4">
+            <span className="text-lg font-bold text-blue-600">LKR {price.toFixed(2)}</span>
+            <span className={`inline-flex px-2.5 py-1 rounded-full text-xs font-medium ${stockStatus.color}`}>
+              {stock} in stock
+            </span>
           </div>
         </div>
         <button
-          onClick={handleClick}
+          onClick={e => { e.stopPropagation(); handleClick(e); }}
           disabled={stock === 0}
-          className={`px-5 py-2 rounded-lg font-semibold text-sm shadow transition-all duration-200 ${
+          className={`px-6 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
             stock === 0
               ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
+              : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-100 active:transform active:scale-95'
           }`}
         >
-          {stock === 0 ? 'Out of Stock' : 'Add'}
+          {stock === 0 ? 'Out of Stock' : 'Add to Order'}
         </button>
       </div>
     );
@@ -81,41 +87,50 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
 
   // --- Grid View ---
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden group relative">
-      <div className="relative w-full aspect-square bg-gray-50 flex items-center justify-center">
+    <div
+      className="bg-white border border-gray-200 rounded-2xl hover:border-blue-200 hover:shadow-md transition-all duration-300 flex flex-col overflow-hidden group cursor-pointer"
+      onClick={handleClick}
+      tabIndex={0}
+      role="button"
+      aria-disabled={stock === 0}
+    >
+      <div className="relative w-full aspect-square p-6 bg-slate-50 flex items-center justify-center">
         {!imgError ? (
           <img
             src={image}
             alt={name}
-            className="w-24 h-24 object-cover rounded-xl border border-gray-100 transition-transform duration-300 group-hover:scale-105"
+            className="w-32 h-32 object-contain transition-transform duration-300 group-hover:scale-110"
             onError={() => setImgError(true)}
           />
         ) : (
-          <div className="w-24 h-24 flex items-center justify-center bg-pink-300 text-black text-4xl font-bold rounded-xl">
+          <div className="w-32 h-32 flex items-center justify-center bg-slate-200 text-slate-600 text-3xl font-semibold rounded-xl">
             {getInitials(name)}
           </div>
         )}
-        <span className={`absolute top-3 left-3 px-3 py-1 rounded text-xs font-semibold ${stockStatus.color} shadow`}>
-          {stockStatus.text}
-        </span>
-        <span className="absolute top-3 right-3 bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold shadow">
-          LKR {price.toFixed(2)}
-        </span>
+        <div className="absolute top-4 right-4 flex flex-col gap-2">
+          <span className="bg-white shadow-sm text-blue-600 px-3 py-1.5 rounded-lg text-sm font-bold">
+            LKR {price.toFixed(2)}
+          </span>
+          <span className={`px-3 py-1.5 rounded-lg text-xs font-medium ${stockStatus.color}`}>
+            {stock} in stock
+          </span>
+        </div>
       </div>
-      <div className="flex flex-col flex-1 p-4">
-        <h3 className="font-bold text-base text-gray-900 mb-2 line-clamp-2">{name}</h3>
-        <div className="flex-1" />
-        <button
-          onClick={handleClick}
-          disabled={stock === 0}
-          className={`w-full py-2 rounded-lg font-semibold text-sm mt-2 transition-all duration-200 ${
-            stock === 0
-              ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-              : 'bg-blue-600 text-white hover:bg-blue-700'
-          }`}
-        >
-          {stock === 0 ? 'Out of Stock' : 'Add to Order'}
-        </button>
+      <div className="flex flex-col flex-1 p-5">
+        <h3 className="font-semibold text-gray-900 mb-4 line-clamp-2 min-h-[48px]">{name}</h3>
+        <div className="mt-auto">
+          <button
+            onClick={e => { e.stopPropagation(); handleClick(e); }}
+            disabled={stock === 0}
+            className={`w-full py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 ${
+              stock === 0
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg hover:shadow-blue-100 active:transform active:scale-95'
+            }`}
+          >
+            {stock === 0 ? 'Out of Stock' : 'Add to Order'}
+          </button>
+        </div>
       </div>
     </div>
   );

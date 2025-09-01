@@ -7,7 +7,6 @@ import {
     MdPerson, 
     MdSettings,
     MdInventory,
-    MdSearch,
     MdLogout 
 } from 'react-icons/md';
 

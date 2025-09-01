@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 
 const Inventory: React.FC = () => {
-  const [inventoryItems, setInventoryItems] = useState([]);
-  const [loading, setLoading] = useState(true);
+  // const [inventoryItems, setInventoryItems] = useState([]);
+  // const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
 
   return (

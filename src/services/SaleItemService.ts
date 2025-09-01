@@ -49,3 +49,14 @@ export const deleteSaleItem = async (id: string | number) => {
     throw error;
   }
 };
+
+// Get all sale items by saleId
+export const getAllSaleItemsBySaleId = async (saleId: number) => {
+  try {
+    const response = await apiClient.get(`/sale-items/by-sale/${saleId}/view`);
+    return response.data; // { statusCode, message, saleItemDTOList }
+  } catch (error) {
+    console.error("Fetching sale items by saleId failed:", error);
+    throw error;
+  }
+};
