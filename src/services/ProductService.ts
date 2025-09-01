@@ -49,3 +49,26 @@ export const deleteProduct = async (id: string | number) => {
     throw error;
   }
 };
+
+export const getProductsWithLowQty = async () => {
+  try {
+    const response = await apiClient.get("/products/low-qty");
+    console.log("Low quantity products fetched successfully:", response.data);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching low quantity products failed:", error);
+    // If the endpoint doesn't exist, fall back to getting all products and filtering
+    try {
+      console.log("Falling back to getAllProducts and filtering...");
+      const allProductsResponse = await getAllProducts();
+      const lowStockProducts = allProductsResponse.productDTOList?.filter((product: any) => product.qty < 10) || [];
+      return {
+        ...allProductsResponse,
+        productDTOList: lowStockProducts
+      };
+    } catch (fallbackError) {
+      console.error("Fallback method also failed:", fallbackError);
+      throw error;
+    }
+  }
+};
