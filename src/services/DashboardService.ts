@@ -9,6 +9,8 @@ export interface DashboardStatsResponse {
     };
 }
 
+//implemented
+
 export const getDashboardStats = async (): Promise<DashboardStatsResponse> => {
     try {
         const response = await apiClient.get('/dashboard/stats');
@@ -34,6 +36,7 @@ export interface AdminDashboardStatsResponse {
     };
 }
 
+//implemented
 export const getAdminDashboardStats = async (): Promise<AdminDashboardStatsResponse> => {
     try {
         const response = await apiClient.get('/admin/dashboard/stats');
@@ -57,6 +60,8 @@ export interface AdminDailySalesChartResponse {
     data?: AdminDailySalesChartItem[];
 }
 
+
+//to be implemented
 export const getAdminDailySalesChart = async (): Promise<AdminDailySalesChartResponse> => {
     try {
         const response = await apiClient.get('/admin/dashboard/daily-sales-chart');
@@ -80,6 +85,8 @@ export interface AdminMonthlySalesChartResponse {
     data?: AdminMonthlySalesChartItem[];
 }
 
+//implemented
+
 export const getAdminMonthlySalesChart = async (): Promise<AdminMonthlySalesChartResponse> => {
     try {
         const response = await apiClient.get('/admin/dashboard/monthly-sales-chart');
@@ -102,6 +109,8 @@ export interface TodayRevenueAndProfitResponse {
     };
 }
 
+
+//to be implemented
 export const getTodayRevenueAndProfit = async (): Promise<TodayRevenueAndProfitResponse> => {
     try {
         const response = await apiClient.get('/admin/analytics/revenue/today');
@@ -128,6 +137,8 @@ export interface MonthlyDailyRevenueStat {
         dailyStats: MonthlyDailyRevenueStat[];
     };
 }
+
+//implemented
 
 export const getMonthlyDailyRevenueStats = async (): Promise<MonthlyDailyRevenueStatsResponse> => {
     try {
@@ -156,6 +167,7 @@ export interface YearlyMonthlyRevenueStatsResponse {
     };
 }
 
+//implemented
 export const getYearlyMonthlyRevenueStats = async (): Promise<YearlyMonthlyRevenueStatsResponse> => {
     try {
         const response = await apiClient.get('/admin/analytics/revenue/year/monthly');

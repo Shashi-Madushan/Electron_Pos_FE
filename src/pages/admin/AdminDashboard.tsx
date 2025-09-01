@@ -43,6 +43,77 @@ const AdminDashboard: React.FC = () => {
     fetchData();
   }, []);
 
+  const processDataForAllDays = (dailyStats?: MonthlyDailyRevenueStatsResponse['data']) => {
+    if (!dailyStats?.dailyStats) return [];
+    
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Create array with all days of the month
+    const allDays = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return {
+        date: dateStr,
+        revenue: 0,
+        profit: 0,
+        count: 0
+      };
+    });
+
+    // Merge existing data
+    dailyStats.dailyStats.forEach(stat => {
+      const dayIndex = new Date(stat.date).getDate() - 1;
+      if (dayIndex >= 0 && dayIndex < allDays.length) {
+        allDays[dayIndex] = stat;
+      }
+    });
+
+    return allDays;
+  };
+
+  const processDataForAllMonths = (yearlyStats?: YearlyMonthlyRevenueStatsResponse['data']) => {
+    if (!yearlyStats?.monthlyStats) return [];
+    
+    const months = Array.from({ length: 12 }, (_, i) => {
+      return {
+        month: i + 1,
+        revenue: 0,
+        profit: 0,
+        count: 0
+      };
+    });
+
+    yearlyStats.monthlyStats.forEach(stat => {
+      if (stat.month >= 1 && stat.month <= 12) {
+        months[stat.month - 1] = stat;
+      }
+    });
+
+    return months;
+  };
+
+  const processMonthlyChartData = (data?: AdminMonthlySalesChartResponse['data']) => {
+    const allMonths = Array.from({ length: 12 }, (_, i) => ({
+      month: ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+             'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'][i],
+      salesCount: 0
+    }));
+
+    if (data) {
+      data.forEach(item => {
+        const monthIndex = allMonths.findIndex(m => m.month === item.month);
+        if (monthIndex !== -1) {
+          allMonths[monthIndex] = item;
+        }
+      });
+    }
+
+    return allMonths;
+  };
+
   return (
     <div className="p-4">
       <h1 className="text-2xl font-bold mb-4">Admin Dashboard</h1>
@@ -73,11 +144,16 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4">Daily Revenue</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyStats?.dailyStats ?? []}>
+              <LineChart data={processDataForAllDays(dailyStats)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="date" />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={(value) => new Date(value).getDate().toString()}
+                />
                 <YAxis />
-                <Tooltip />
+                <Tooltip 
+                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                />
                 <Legend />
                 <Line 
                   type="monotone" 
@@ -102,11 +178,22 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4">Monthly Revenue</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={yearlyStats?.monthlyStats ?? []}>
+              <BarChart data={processDataForAllMonths(yearlyStats)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis 
+                  dataKey="month" 
+                  tickFormatter={(value) => [
+                    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                  ][value - 1]}
+                />
                 <YAxis />
-                <Tooltip />
+                <Tooltip 
+                  labelFormatter={(label) => [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ][label - 1]}
+                />
                 <Legend />
                 <Bar dataKey="revenue" fill="#4F46E5" name="Revenue" />
                 <Bar dataKey="profit" fill="#10B981" name="Profit" />
@@ -119,9 +206,12 @@ const AdminDashboard: React.FC = () => {
           <h2 className="text-lg font-semibold mb-4">Monthly Sales Count</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={monthlySalesChart ?? []}>
+              <BarChart data={processMonthlyChartData(monthlySalesChart)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="month" />
+                <XAxis 
+                  dataKey="month" 
+                  tickFormatter={(value) => value.substring(0, 3)}
+                />
                 <YAxis />
                 <Tooltip />
                 <Legend />
