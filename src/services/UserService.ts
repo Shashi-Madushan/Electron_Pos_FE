@@ -78,7 +78,7 @@ export const updateUserAdmin = async (userId: number, userData: UserDTO) => {
 // Change password
 export const changeUserPassword = async (userId: number, oldPassword: string, newPassword: string) => {
     try {
-        const response = await apiClient.put(`/users/change-password/${userId}`, {oldPassword, newPassword});
+        const response = await apiClient.post(`/users/change-password/${userId}?oldPassword=${encodeURIComponent(oldPassword)}&newPassword=${encodeURIComponent(newPassword)}`);
         return response.data;
     } catch (error) {
         console.error('Error change password:', error);
