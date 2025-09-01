@@ -1,10 +1,10 @@
 import React, { useEffect, useState, useCallback, memo, type Dispatch,type  SetStateAction } from "react";
 import { Eye, EyeOff, User, Lock } from "lucide-react";
-import type { UserDTO } from "../../types/Auth";
-import { changeUserPassword, updateUserAdmin } from "../../services/UserService";
+import type { UserDTO } from "../types/Auth";
+import { changeUserPassword, updateUserAdmin } from "../services/UserService";
 import { toast } from "react-toastify";
 
-interface AdminProfileProps {
+interface UserProfileProps {
     loggedInUser: UserDTO | null;
     setLoggedInUser: Dispatch<SetStateAction<UserDTO | null>>;
     showPassword: boolean;
@@ -23,7 +23,7 @@ interface AdminProfileProps {
     handleChangePassword: () => Promise<void>;
 }
 
-const AdminProfile = memo(({
+const UserProfile = memo(({
     loggedInUser,
     setLoggedInUser,
     showPassword,
@@ -40,13 +40,13 @@ const AdminProfile = memo(({
     setConfirmPassword,
     handleUpdateProfile,
     handleChangePassword
-}: AdminProfileProps) => (
+}: UserProfileProps) => (
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Admin Details */}
+        {/* User Details */}
         {loggedInUser ? (
             <div className="bg-white rounded-lg shadow p-6">
                 <h2 className="text-xl font-semibold mb-4 flex items-center">
-                    <User className="mr-2" size={20} /> Admin Details
+                    <User className="mr-2" size={20} /> User Details
                 </h2>
                 <div className="space-y-4">
                     <div>
@@ -180,7 +180,7 @@ const AdminProfile = memo(({
     </div>
 ));
 
-export const SystemSettings: React.FC = () => {
+export const UserSettings: React.FC = () => {
     const [showPassword, setShowPassword] = useState(false);
     const [showNewPassword, setShowNewPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -245,8 +245,8 @@ export const SystemSettings: React.FC = () => {
 
     return (
         <div className="p-4 bg-gray-100 min-h-screen">
-            <h1 className="text-2xl font-bold mb-6">Admin Settings</h1>
-            <AdminProfile
+            <h1 className="text-2xl font-bold mb-6">User Settings</h1>
+            <UserProfile
                 loggedInUser={loggedInUser}
                 setLoggedInUser={setLoggedInUser}
                 showPassword={showPassword}

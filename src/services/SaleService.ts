@@ -51,7 +51,7 @@ export const updateSale = async (id: string | number, saleData: any) => {
 
 export const deleteSale = async (id: string | number) => {
   try {
-    const response = await apiClient.delete(`/sales/${id}`);
+    const response = await apiClient.delete(`/admin/sales/${id}`);
     return response.data;
   } catch (error) {
     console.error("Deleting sale failed:", error);
