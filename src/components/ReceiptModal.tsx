@@ -34,7 +34,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
         }}>
             <div style={{ 
                 backgroundColor: 'white',
-                width: '70mm',  // Standard thermal paper width
+                width: '75mm',  // Standard thermal paper width
                 margin: '0 auto',
                 overflow: 'visible'
             }}>
