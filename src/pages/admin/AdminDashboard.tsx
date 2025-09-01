@@ -1,53 +1,118 @@
 import React, { useEffect, useState } from 'react';
-import { getOverview } from '../../services/AnalyticsService';
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import {
+  getAdminDashboardStats,
+  getMonthlyDailyRevenueStats,
+  getYearlyMonthlyRevenueStats,
+  getAdminMonthlySalesChart,
+  type AdminDashboardStatsResponse,
+  type MonthlyDailyRevenueStatsResponse,
+  type YearlyMonthlyRevenueStatsResponse,
+  type AdminMonthlySalesChartResponse,
+} from '../../services/DashboardService';
 
 const AdminDashboard: React.FC = () => {
-  const [overview, setOverview] = useState<any>(null);
+  const [dashboardStats, setDashboardStats] = useState<AdminDashboardStatsResponse['data']>();
+  const [dailyStats, setDailyStats] = useState<MonthlyDailyRevenueStatsResponse['data']>();
+  const [yearlyStats, setYearlyStats] = useState<YearlyMonthlyRevenueStatsResponse['data']>();
+  const [monthlySalesChart, setMonthlySalesChart] = useState<AdminMonthlySalesChartResponse['data']>();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchOverview = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError(null);
       try {
-        const response = await getOverview();
-        setOverview(response?.data ?? null);
+        const [statsRes, dailyRes, yearlyRes, monthlySalesRes] = await Promise.all([
+          getAdminDashboardStats(),
+          getMonthlyDailyRevenueStats(),
+          getYearlyMonthlyRevenueStats(),
+          getAdminMonthlySalesChart()
+        ]);
+
+        if (statsRes.statusCode === 200) setDashboardStats(statsRes.data);
+        if (dailyRes.statusCode === 200) setDailyStats(dailyRes.data);
+        if (yearlyRes.statusCode === 200) setYearlyStats(yearlyRes.data);
+        if (monthlySalesRes.statusCode === 200) setMonthlySalesChart(monthlySalesRes.data);
       } catch (err: any) {
-        setError(err.message || 'Failed to fetch overview');
-        setOverview(null);
+        setError(err.message || 'Failed to fetch dashboard data');
       }
       setLoading(false);
     };
-    fetchOverview();
+    fetchData();
   }, []);
 
-  // Mock data for charts
-  const dailyRevenueData = [
-    { hour: '00:00', revenue: 1200 },
-    { hour: '04:00', revenue: 800 },
-    { hour: '08:00', revenue: 2500 },
-    { hour: '12:00', revenue: 3800 },
-    { hour: '16:00', revenue: 2900 },
-    { hour: '20:00', revenue: 1900 },
-  ];
+  const processDataForAllDays = (dailyStats?: MonthlyDailyRevenueStatsResponse['data']) => {
+    if (!dailyStats?.dailyStats) return [];
+    
+    const currentDate = new Date();
+    const year = currentDate.getFullYear();
+    const month = currentDate.getMonth();
+    const daysInMonth = new Date(year, month + 1, 0).getDate();
+    
+    // Create array with all days of the month
+    const allDays = Array.from({ length: daysInMonth }, (_, i) => {
+      const day = i + 1;
+      const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      return {
+        date: dateStr,
+        revenue: 0,
+        profit: 0,
+        count: 0
+      };
+    });
 
-  const dailySalesData = [
-    { hour: '00:00', sales: 12 },
-    { hour: '04:00', sales: 8 },
-    { hour: '08:00', sales: 25 },
-    { hour: '12:00', sales: 38 },
-    { hour: '16:00', sales: 29 },
-    { hour: '20:00', sales: 19 },
-  ];
+    // Merge existing data
+    dailyStats.dailyStats.forEach(stat => {
+      const dayIndex = new Date(stat.date).getDate() - 1;
+      if (dayIndex >= 0 && dayIndex < allDays.length) {
+        allDays[dayIndex] = stat;
+      }
+    });
 
-  const categoryData = [
-    { name: 'Electronics', sales: 450, stock: 120 },
-    { name: 'Clothing', sales: 320, stock: 250 },
-    { name: 'Accessories', sales: 280, stock: 180 },
-    { name: 'Home & Living', sales: 150, stock: 90 },
-  ];
+    return allDays;
+  };
+
+  const processDataForAllMonths = (yearlyStats?: YearlyMonthlyRevenueStatsResponse['data']) => {
+    if (!yearlyStats?.monthlyStats) return [];
+    
+    const months = Array.from({ length: 12 }, (_, i) => {
+      return {
+        month: i + 1,
+        revenue: 0,
+        profit: 0,
+        count: 0
+      };
+    });
+
+    yearlyStats.monthlyStats.forEach(stat => {
+      if (stat.month >= 1 && stat.month <= 12) {
+        months[stat.month - 1] = stat;
+      }
+    });
+
+    return months;
+  };
+
+  const processMonthlyChartData = (data?: AdminMonthlySalesChartResponse['data']) => {
+    const allMonths = Array.from({ length: 12 }, (_, i) => ({
+      month: ['JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+             'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'][i],
+      salesCount: 0
+    }));
+
+    if (data) {
+      data.forEach(item => {
+        const monthIndex = allMonths.findIndex(m => m.month === item.month);
+        if (monthIndex !== -1) {
+          allMonths[monthIndex] = item;
+        }
+      });
+    }
+
+    return allMonths;
+  };
 
   return (
     <div className="p-4">
@@ -57,80 +122,107 @@ const AdminDashboard: React.FC = () => {
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="font-semibold text-lg">Total Customers</h3>
-          <p className="text-2xl mt-2">{overview?.totalCustomers ?? 0}</p>
+          <h3 className="font-semibold text-lg">Today Sales</h3>
+          <p className="text-2xl mt-2">{dashboardStats?.todaySalesCount ?? 0}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="font-semibold text-lg">Total Sales</h3>
-          <p className="text-2xl mt-2">{overview?.totalSales ?? 0}</p>
+          <h3 className="font-semibold text-lg">Monthly Sales</h3>
+          <p className="text-2xl mt-2">{dashboardStats?.monthlySalesCount ?? 0}</p>
+        </div>
+        <div className="bg-white p-6 rounded-lg shadow">
+          <h3 className="font-semibold text-lg">Total Products</h3>
+          <p className="text-2xl mt-2">{dashboardStats?.totalProducts ?? 0}</p>
         </div>
         <div className="bg-white p-6 rounded-lg shadow">
           <h3 className="font-semibold text-lg">Active Products</h3>
-          <p className="text-2xl mt-2">{overview?.totalProducts ?? 0}</p>
-        </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h3 className="font-semibold text-lg">Average Order</h3>
-          <p className="text-2xl mt-2">{overview?.averageOrder ?? 0}</p>
+          <p className="text-2xl mt-2">{dashboardStats?.activeProducts ?? 0}</p>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white p-6 rounded-lg shadow">
+      <div className="flex flex-col gap-6 mb-6">
+        <div className="bg-white p-6 rounded-lg shadow w-full">
           <h2 className="text-lg font-semibold mb-4">Daily Revenue</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailyRevenueData}>
+              <LineChart data={processDataForAllDays(dailyStats)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
+                <XAxis 
+                  dataKey="date" 
+                  tickFormatter={(value) => new Date(value).getDate().toString()}
+                />
                 <YAxis />
-                <Tooltip />
+                <Tooltip 
+                  labelFormatter={(label) => new Date(label).toLocaleDateString()}
+                />
                 <Legend />
                 <Line 
                   type="monotone" 
                   dataKey="revenue" 
                   stroke="#4F46E5" 
                   strokeWidth={2}
+                  name="Revenue"
+                />
+                <Line 
+                  type="monotone" 
+                  dataKey="profit" 
+                  stroke="#10B981" 
+                  strokeWidth={2}
+                  name="Profit"
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-lg shadow">
-          <h2 className="text-lg font-semibold mb-4">Daily Sales Count</h2>
+        
+        <div className="bg-white p-6 rounded-lg shadow w-full">
+          <h2 className="text-lg font-semibold mb-4">Monthly Revenue</h2>
           <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={dailySalesData}>
+              <BarChart data={processDataForAllMonths(yearlyStats)}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="hour" />
+                <XAxis 
+                  dataKey="month" 
+                  tickFormatter={(value) => [
+                    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+                  ][value - 1]}
+                />
+                <YAxis />
+                <Tooltip 
+                  labelFormatter={(label) => [
+                    'January', 'February', 'March', 'April', 'May', 'June',
+                    'July', 'August', 'September', 'October', 'November', 'December'
+                  ][label - 1]}
+                />
+                <Legend />
+                <Bar dataKey="revenue" fill="#4F46E5" name="Revenue" />
+                <Bar dataKey="profit" fill="#10B981" name="Profit" />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-6 rounded-lg shadow w-full">
+          <h2 className="text-lg font-semibold mb-4">Monthly Sales Count</h2>
+          <div className="h-[300px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={processMonthlyChartData(monthlySalesChart)}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis 
+                  dataKey="month" 
+                  tickFormatter={(value) => value.substring(0, 3)}
+                />
                 <YAxis />
                 <Tooltip />
                 <Legend />
-                <Line 
-                  type="monotone" 
-                  dataKey="sales" 
-                  stroke="#10B981" 
-                  strokeWidth={2}
+                <Bar 
+                  dataKey="salesCount" 
+                  fill="#8884d8" 
+                  name="Sales Count"
                 />
-              </LineChart>
+              </BarChart>
             </ResponsiveContainer>
           </div>
-        </div>
-      </div>
-
-      <div className="bg-white p-6 rounded-lg shadow">
-        <h2 className="text-lg font-semibold mb-4">Sales and Stock by Category</h2>
-        <div className="h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={categoryData}>
-              <CartesianGrid strokeDasharray="3 3" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Bar dataKey="sales" fill="#4F46E5" />
-              <Bar dataKey="stock" fill="#10B981" />
-            </BarChart>
-          </ResponsiveContainer>
         </div>
       </div>
     </div>
@@ -138,4 +230,3 @@ const AdminDashboard: React.FC = () => {
 };
 
 export default AdminDashboard;
-
