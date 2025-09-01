@@ -10,7 +10,7 @@ const saleData = {
     totalDiscount: 1500,
     paymentMethod: "CASH",
     userId: 1,
-    customerId: 1,
+    customerId: 0,
     saleItems: [
       {
         saleItemId: 1,

@@ -135,9 +135,11 @@ export default function Receipt(props: ReceiptProps) {
         console.log("User Data:", userData);
         setUser(userData.userDTO);
 
-        const customerData = await getCustomerById(sale.customerId);
-        console.log("Customer Data:", customerData);
-        setCustomer(customerData.customerDTO);
+        if (sale.customerId !== 0) {
+          const customerData = await getCustomerById(sale.customerId);
+          console.log("Customer Data:", customerData);
+          setCustomer(customerData.customerDTO);
+        }
 
         // Load product data for each item
         const productPromises = sale.saleItems.map(async (item) => {
