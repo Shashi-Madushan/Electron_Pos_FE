@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { getSaleByUserId } from '../services/SaleService';
 import { useAuth } from '../context/AuthContext';
+import { getAllSaleItemsBySaleId } from '../services/SaleItemService';
+
 interface Sale {
     saleId: number;
     saleDate: string;
@@ -17,6 +19,18 @@ interface SaleResponse {
     saleDTOList: Sale[];
 }
 
+// Update SaleItem interface to match new API response
+interface SaleItem {
+    saleItemId: number;
+    saleId: number;
+    productName: string;
+    barcode: string;
+    qty: number;
+    price: number;
+    totalPrice: number;
+    discount: number;
+}
+
 const SalesHistoryPage: React.FC = () => {
     const { user } = useAuth(); // Get user from AuthContext
     const [sales, setSales] = useState<Sale[]>([]);
@@ -26,6 +40,13 @@ const SalesHistoryPage: React.FC = () => {
     const [dateRange, setDateRange] = useState('all');
     const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
     const [statusFilter, setStatusFilter] = useState('all');
+
+    // Modal state
+    const [showModal, setShowModal] = useState(false);
+    const [modalSaleId, setModalSaleId] = useState<number | null>(null);
+    const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
+    const [itemsLoading, setItemsLoading] = useState(false);
+    const [itemsError, setItemsError] = useState<string | null>(null);
 
     useEffect(() => {
         if (user?.userId) {
@@ -43,6 +64,32 @@ const SalesHistoryPage: React.FC = () => {
             setSales([]);
         }
         setLoading(false);
+    };
+
+    // Method to open modal and fetch sale items
+    const handleViewDetails = async (saleId: number) => {
+        setModalSaleId(saleId);
+        setShowModal(true);
+        setItemsLoading(true);
+        setItemsError(null);
+        try {
+            const response = await getAllSaleItemsBySaleId(saleId);
+            // Extract saleItemDTOList from response
+            const items = Array.isArray(response?.saleItemDTOList) ? response.saleItemDTOList : [];
+            setSaleItems(items.reverse());
+        } catch (err: any) {
+            setItemsError(err.message || 'Failed to fetch sale items');
+            setSaleItems([]);
+        }
+        setItemsLoading(false);
+    };
+
+    // Method to close modal
+    const handleCloseModal = () => {
+        setShowModal(false);
+        setModalSaleId(null);
+        setSaleItems([]);
+        setItemsError(null);
     };
 
     const filteredSales = sales?.filter(sale => {
@@ -145,7 +192,8 @@ const SalesHistoryPage: React.FC = () => {
                 ) : (
                     <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
                         {viewMode === 'table' ? (
-                            <div className="overflow-x-auto">
+                            // Add a max-h-[500px] (or adjust as needed) and overflow-y-auto to make the table scrollable
+                            <div className="overflow-x-auto" style={{ maxHeight: '500px', overflowY: 'auto' }}>
                                 <table className="w-full">
                                     <thead className="bg-blue-50 text-black border-b border-gray-200">
                                         <tr>
@@ -166,8 +214,8 @@ const SalesHistoryPage: React.FC = () => {
                                                 }`}>
                                                 <td className="p-4 text-black">#{sale.saleId}</td>
                                                 <td className="p-4 text-black">{new Date(sale.saleDate).toLocaleString()}</td>
-                                                <td className="p-4 text-black">${sale.totalAmount.toFixed(2)}</td>
-                                                <td className="p-4 text-black">{sale.totalDiscount}%</td>
+                                                <td className="p-4 text-black">LKR {sale.totalAmount.toFixed(2)}</td>
+                                                <td className="p-4 text-black">LKR {sale.totalDiscount.toFixed(2)}</td>
                                                 <td className="p-4">
                                                     <span className={`px-2 py-1 rounded text-xs font-medium ${
                                                         sale.paymentMethod.toLowerCase() === 'card' 
@@ -179,7 +227,10 @@ const SalesHistoryPage: React.FC = () => {
                                                 </td>
                                                 <td className="p-4 text-black">{sale.userId}</td>
                                                 <td className="p-4">
-                                                    <button className="text-blue-600 hover:text-blue-800">
+                                                    <button
+                                                        className="text-blue-600 hover:text-blue-800"
+                                                        onClick={() => handleViewDetails(sale.saleId)}
+                                                    >
                                                         View Details
                                                     </button>
                                                 </td>
@@ -209,18 +260,21 @@ const SalesHistoryPage: React.FC = () => {
                                             <div className="space-y-2">
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-600">Amount:</span>
-                                                    <span className="text-black font-medium">${sale.totalAmount.toFixed(2)}</span>
+                                                    <span className="text-black font-medium">LKR {sale.totalAmount.toFixed(2)}</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-600">Discount:</span>
-                                                    <span className="text-black font-medium">{sale.totalDiscount}%</span>
+                                                    <span className="text-black font-medium">LKR {sale.totalDiscount}</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span className="text-gray-600">Date:</span>
                                                     <span className="text-black">{new Date(sale.saleDate).toLocaleString()}</span>
                                                 </div>
                                             </div>
-                                            <button className="w-full mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                            <button
+                                                className="w-full mt-4 text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                                onClick={() => handleViewDetails(sale.saleId)}
+                                            >
                                                 View Details
                                             </button>
                                         </div>
@@ -234,6 +288,81 @@ const SalesHistoryPage: React.FC = () => {
                                 <p className="text-gray-500 text-lg">No sales found matching your criteria</p>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* Modal for Sale Items */}
+                {showModal && (
+                    <div
+                        className="fixed inset-0 z-50 flex items-center justify-center"
+                        style={{
+                            background: "rgba(255,255,255,0.7)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)"
+                        }}
+                    >
+                        <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 border border-blue-100 animate-fade-in">
+                            {/* ↑↑↑ max-w-3xl instead of max-w-xl for wider popup */}
+                            <button
+                                className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-3xl font-bold transition-colors"
+                                onClick={handleCloseModal}
+                                aria-label="Close"
+                            >
+                                &times;
+                            </button>
+                            <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
+                                <svg className="inline-block" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                    <rect x="3" y="7" width="18" height="13" rx="2" fill="#e0f2fe" stroke="#3b82f6"/>
+                                    <path d="M16 3v4M8 3v4" stroke="#3b82f6"/>
+                                </svg>
+                                Sale #{modalSaleId} Items
+                            </h2>
+                            {itemsLoading ? (
+                                <div className="flex flex-col items-center py-8">
+                                    <svg className="animate-spin h-8 w-8 text-blue-400 mb-2" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                    </svg>
+                                    <span className="text-gray-500 text-lg">Loading items...</span>
+                                </div>
+                            ) : itemsError ? (
+                                <div className="text-center py-8 text-red-500 font-semibold">{itemsError}</div>
+                            ) : saleItems.length === 0 ? (
+                                <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
+                            ) : (
+                                <div className="overflow-x-auto">
+                                    <table className="w-full border border-blue-100 rounded-lg shadow-sm bg-blue-50">
+                                        <thead>
+                                            <tr className="bg-blue-100 text-blue-900">
+                                                <th className="p-3 text-left font-semibold">#</th>
+                                                <th className="p-3 text-left font-semibold">Product</th>
+                                                <th className="p-3 text-left font-semibold">Barcode</th>
+                                                <th className="p-3 text-left font-semibold">Qty</th>
+                                                <th className="p-3 text-left font-semibold">Price</th>
+                                                <th className="p-3 text-left font-semibold">Total Price</th>
+                                                <th className="p-3 text-left font-semibold">Discount</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {saleItems.map((item, idx) => (
+                                                <tr
+                                                    key={item.saleItemId}
+                                                    className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}
+                                                >
+                                                    <td className="p-3">{idx + 1}</td>
+                                                    <td className="p-3">{item.productName}</td>
+                                                    <td className="p-3">{item.barcode}</td>
+                                                    <td className="p-3">{item.qty}</td>
+                                                    <td className="p-3 text-blue-700 font-medium">LKR {item.price.toFixed(2)}</td>
+                                                    <td className="p-3 text-purple-700 font-medium">LKR {item.totalPrice.toFixed(2)}</td>
+                                                    <td className="p-3 text-green-700 font-medium">LKR {item.discount.toFixed(2)}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
                     </div>
                 )}
             </div>

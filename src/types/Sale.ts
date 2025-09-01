@@ -4,6 +4,7 @@ export interface SaleItemDTO {
   productId: number;
   qty: number;
   price: number;
+  totalPrice: number;
   discount: number;
 }
 

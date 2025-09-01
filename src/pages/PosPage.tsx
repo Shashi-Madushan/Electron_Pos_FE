@@ -84,6 +84,8 @@ const PosPage = () => {
   const handleAddToOrder = (product: Product, quantity: number, discount: number) => {
     setOrderItems(items => {
       const existingItem = items.find(item => item.productId === Number(product.productId));
+      const price = product.salePrice * (1 - discount / 100);
+      const totalPrice = price * quantity;
       if (existingItem) {
         return items.map(item =>
           item.productId === Number(product.productId)
@@ -91,7 +93,8 @@ const PosPage = () => {
                 ...item,
                 qty: item.qty + quantity,
                 discount: discount,
-                price: product.salePrice * (1 - discount / 100),
+                price: price,
+                totalPrice: (item.qty + quantity) * price,
               }
             : item
         );
@@ -101,8 +104,9 @@ const PosPage = () => {
         {
           productId: Number(product.productId),
           qty: quantity,
-          price: product.salePrice * (1 - discount / 100),
+          price: price,
           discount: discount,
+          totalPrice: totalPrice,
         },
       ];
     });
@@ -156,6 +160,7 @@ const PosPage = () => {
         qty: item.qty,
         price: item.price,
         discount: item.discount,
+        totalPrice: item.totalPrice, // include totalPrice
       })),
     };
   };
