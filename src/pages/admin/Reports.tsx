@@ -90,8 +90,8 @@ const Reports: React.FC = () => {
         >
           <option value="sales">Sales Report</option>
           <option value="profit">Profit Report</option>
-          <option value="inventory">Inventory Report</option>
-          <option value="users">User Activity Report</option>
+          {/* <option value="inventory">Inventory Report</option>
+          <option value="users">User Activity Report</option> */}
         </select>
 
         <select
@@ -102,7 +102,7 @@ const Reports: React.FC = () => {
           <option value="today">Today</option>
           <option value="week">This Week</option>
           <option value="month">This Month</option>
-          <option value="year">This Year</option>
+          {/* <option value="year">This Year</option> */}
           <option value="custom">Custom Range</option>
         </select>
 
