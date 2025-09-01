@@ -5,6 +5,7 @@ interface UserDTO {
   [key: string]: any;
 }
 
+
 // Register a new user (admin)
 export const registerUser = async (userData: {
   userName: string;
@@ -72,6 +73,17 @@ export const updateUserAdmin = async (userId: number, userData: UserDTO) => {
     console.error('Error updating user (admin):', error);
     throw error;
   }
+};
+
+// Change password
+export const changeUserPassword = async (userId: number, oldPassword: string, newPassword: string) => {
+    try {
+        const response = await apiClient.put(`/users/change-password/${userId}`, {oldPassword, newPassword});
+        return response.data;
+    } catch (error) {
+        console.error('Error change password:', error);
+        throw error;
+    }
 };
 
 // Delete user (admin)
