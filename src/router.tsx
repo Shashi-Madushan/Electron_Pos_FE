@@ -1,4 +1,4 @@
-import { createBrowserRouter ,Navigate } from "react-router-dom";
+import { createHashRouter ,Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import { UserLayout } from "./layouts/UserLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
@@ -40,7 +40,7 @@ const RootRedirect = () => {
   return <Navigate to="/dashboard" replace />;
 };
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   // Public Routes
   {
     path: "/login",
