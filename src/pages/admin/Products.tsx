@@ -582,7 +582,7 @@ const Products: React.FC = () => {
                                 <div>
                                     <label className="block text-sm font-medium text-black mb-1">Cost *</label>
                                     <div className="relative">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">LKR</span>
                                         <input
                                             type="number"
                                             step="0.01"
@@ -590,14 +590,14 @@ const Products: React.FC = () => {
                                             placeholder="Enter cost"
                                             value={newProduct.cost || ''}
                                             onChange={(e) => setNewProduct({ ...newProduct, cost: parseFloat(e.target.value) || 0 })}
-                                            className="w-full pl-6 pr-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 text-black"
+                                            className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 text-black"
                                         />
                                     </div>
                                 </div>
                                 <div>
                                     <label className="block text-sm font-medium text-black mb-1">Sales Price *</label>
                                     <div className="relative">
-                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">$</span>
+                                        <span className="absolute left-2 top-1/2 transform -translate-y-1/2 text-gray-500">LKR</span>
                                         <input
                                             type="number"
                                             value={newProduct.salePrice || ""}
@@ -605,7 +605,7 @@ const Products: React.FC = () => {
                                                 setNewProduct({ ...newProduct, salePrice: parseFloat(e.target.value) || 0 })
                                             }
                                             placeholder="Enter sales price"
-                                            className="w-full pl-6 pr-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 text-black"
+                                            className="w-full pl-10 pr-2 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 text-black"
                                         />
                                     </div>
                                 </div>
@@ -651,8 +651,11 @@ const Products: React.FC = () => {
                         </div>
                         <div className="p-6 flex flex-col items-center justify-center">
                             {selectedProductForBarcode.barcode ? (
-                                <div ref={barcodeRef} className="bg-white p-4 inline-block">
+                                <div ref={barcodeRef} className="bg-white p-4 inline-block text-center">
                                     <Barcode value={selectedProductForBarcode.barcode} />
+                                    <div className="text-black font-semibold mt-1">
+                                        LKR {selectedProductForBarcode.salePrice.toFixed(2)}
+                                    </div>
                                 </div>
                             ) : (
                                 <p className="text-gray-500">No barcode available for this product.</p>

@@ -14,8 +14,8 @@ interface CategoryScrollProps {
 
 const CategoryScroll: React.FC<CategoryScrollProps> = ({ items, selected, onSelect }) => {
   return (
-    <div className="overflow-x-auto">
-      <div className="flex gap-2 pb-2">
+    <div className="w-full">
+      <div className="flex flex-wrap gap-2 pb-2">
         {items.map((item) => (
           <button
             key={item.id}

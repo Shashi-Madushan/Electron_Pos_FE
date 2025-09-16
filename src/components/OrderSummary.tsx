@@ -6,12 +6,18 @@ interface OrderSummaryProps {
   items: SaleItemDTO[];
   products: Product[];
   onUpdateQuantity: (productId: string, change: number) => void;
-  onRemoveItem: (productId: string) => void; // added prop
+  onRemoveItem: (productId: string) => void;
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQuantity, onRemoveItem }) => {
+const OrderSummary: React.FC<OrderSummaryProps> = ({
+  items,
+  products,
+  onUpdateQuantity,
+  onRemoveItem,
+}) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+  const [orderDiscount, setOrderDiscount] = useState<number>(0);
 
   // Helper to get product info
   const getProduct = (productId: number) => {
@@ -29,7 +35,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
   }, 0);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const total = subtotal;
+  const totalDiscount = Math.min(orderDiscount, subtotal);
+  const total = subtotal - totalDiscount;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
@@ -47,6 +54,18 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
     setShowConfirmation(false);
     setItemToRemove(null);
   };
+
+  if (items.length === 0) {
+    return (
+      <div className="flex-1 bg-white rounded-lg border border-gray-200 p-4 flex flex-col items-center justify-center text-gray-400">
+        <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <span className="text-lg font-medium">Cart is empty</span>
+        <p className="text-sm mt-2">Add some products to get started</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -115,13 +134,30 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
             <span className="font-medium">{formatLKR(originalTotal)}</span>
           </div>
           <div className="flex justify-between mb-2 text-red-600">
-            <span>Total Discount</span>
+            <span>Item Discounts</span>
             <span>-{formatLKR(discountTotal)}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-gray-600">Subtotal</span>
             <span className="font-medium">{formatLKR(subtotal)}</span>
           </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600">Order Discount (LKR)</span>
+            <input
+              type="number"
+              min="0"
+              max={subtotal}
+              value={orderDiscount}
+              onChange={(e) => setOrderDiscount(Math.min(subtotal, Math.max(0, Number(e.target.value))))}
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
+            />
+          </div>
+          {orderDiscount > 0 && (
+            <div className="flex justify-between mb-2 text-red-600">
+              <span>Order Discount</span>
+              <span>-{formatLKR(totalDiscount)}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-4">
             <span className="font-bold text-black">Total</span>
             <span className="font-bold text-blue-600">{formatLKR(total)}</span>
