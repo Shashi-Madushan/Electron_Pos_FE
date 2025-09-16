@@ -1,5 +1,4 @@
-import { useState, useEffect, useRef } from 'react';  // Add useRef import
-import ProductCard from '../components/ProductCard';
+import { useState, useEffect, useRef } from 'react';
 import CategoryScroll from '../components/CategoryScroll';
 import OrderSummary from '../components/OrderSummary';
 import { getAllCategories, type Category } from '../services/CategoryService';
@@ -21,7 +20,7 @@ interface Brand {
 const PosPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedBrand, setSelectedBrand] = useState('all');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid'); // Set default to grid
   const [orderItems, setOrderItems] = useState<SaleItemDTO[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
@@ -307,17 +306,42 @@ const PosPage = () => {
                     <p className="text-sm mt-2">Try adjusting your search or filters</p>
                   </div>
                 ) : (
-                  filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.productId}
-                      name={product.productName}
-                      price={product.salePrice}
-                      image={product.image || "/placeholder.jpg"}
-                      onAdd={() => handleProductSelect(product)}
-                      view={viewMode}
-                      stock={product.qty}
-                    />
-                  ))
+                  viewMode === 'grid' ? (
+                    filteredProducts.map((product) => (
+                      <div key={product.productId} className="flex flex-col bg-white border border-gray-200 rounded-xl shadow-sm p-4 hover:border-blue-400 transition cursor-pointer group" onClick={() => handleProductSelect(product)}>
+                        <div className="flex-1 flex flex-col justify-between">
+                          <span className="font-semibold text-lg text-gray-900 mb-2 truncate">{product.productName}</span>
+                          <span className="text-blue-600 font-bold text-base mb-2">LKR {product.salePrice.toFixed(2)}</span>
+                          <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium mb-2 ${product.qty === 0 ? 'bg-red-50 text-red-700' : product.qty < 10 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{product.qty} in stock</span>
+                        </div>
+                        <button
+                          className={`w-full py-2 rounded-lg font-semibold text-sm mt-2 transition-all duration-200 ${product.qty === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 hover:shadow-lg active:scale-95'}`}
+                          disabled={product.qty === 0}
+                        >
+                          {product.qty === 0 ? 'Out of Stock' : 'Add'}
+                        </button>
+                      </div>
+                    ))
+                  ) : (
+                    <ul className="w-full flex flex-col gap-3">
+                      {filteredProducts.map((product) => (
+                        <li key={product.productId} className="flex items-center justify-between px-6 py-4 bg-gray-50 border border-gray-200 rounded-xl shadow-sm hover:bg-blue-50 transition cursor-pointer" onClick={() => handleProductSelect(product)}>
+                          <div className="flex flex-col flex-1 min-w-0">
+                            <span className="font-semibold text-lg text-gray-900 truncate">{product.productName}</span>
+                            <span className="text-xs text-gray-500">ID: {product.productId}</span>
+                          </div>
+                          <span className="text-blue-600 font-bold text-base mx-6">LKR {product.salePrice.toFixed(2)}</span>
+                          <span className={`text-xs px-3 py-1 rounded-full font-medium mx-2 ${product.qty === 0 ? 'bg-red-50 text-red-700' : product.qty < 10 ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'}`}>{product.qty} in stock</span>
+                          <button
+                            className={`ml-6 px-5 py-2 rounded-lg font-semibold text-sm transition-all duration-200 ${product.qty === 0 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'}`}
+                            disabled={product.qty === 0}
+                          >
+                            {product.qty === 0 ? 'Out of Stock' : 'Add'}
+                          </button>
+                        </li>
+                      ))}
+                    </ul>
+                  )
                 )}
               </div>
             </div>

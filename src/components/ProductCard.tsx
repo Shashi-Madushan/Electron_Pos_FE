@@ -3,7 +3,6 @@ import React from 'react';
 interface ProductCardProps {
   name: string;
   price: number;
-  image: string;
   stock: number;
   onAdd: () => void;
   view: 'grid' | 'list';
@@ -18,9 +17,7 @@ function getInitials(name: string) {
     .slice(0, 2);
 }
 
-const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, onAdd, view }) => {
-  const [imgError, setImgError] = React.useState(false);
-
+const ProductCard: React.FC<ProductCardProps> = ({ name, price, stock, onAdd, view }) => {
   const getStockStatus = (stock: number): { color: string; text: string } => {
     if (stock === 0) return { color: 'bg-red-50 text-red-700', text: 'Out of Stock' };
     if (stock < 10) return { color: 'bg-amber-50 text-amber-700', text: 'Low Stock' };
@@ -47,19 +44,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
         role="button"
         aria-disabled={stock === 0}
       >
-        <div className="relative flex-shrink-0 w-24 h-24 flex items-center justify-center bg-slate-100 rounded-xl overflow-hidden">
-          {!imgError ? (
-            <img
-              src={image}
-              alt={name}
-              className="w-full h-full object-contain p-2"
-              onError={() => setImgError(true)}
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-slate-200 text-slate-600 text-2xl font-semibold">
-              {getInitials(name)}
-            </div>
-          )}
+        <div className="relative flex-shrink-0 w-24 h-24 flex items-center justify-center bg-slate-200 rounded-xl overflow-hidden text-slate-600 text-2xl font-semibold">
+          {getInitials(name)}
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-lg text-gray-900 mb-2 truncate">{name}</h3>
@@ -94,19 +80,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ name, price, image, stock, on
       role="button"
       aria-disabled={stock === 0}
     >
-      <div className="relative w-full aspect-square p-6 bg-slate-50 flex items-center justify-center">
-        {!imgError ? (
-          <img
-            src={image}
-            alt={name}
-            className="w-32 h-32 object-contain transition-transform duration-300 group-hover:scale-110"
-            onError={() => setImgError(true)}
-          />
-        ) : (
-          <div className="w-32 h-32 flex items-center justify-center bg-slate-200 text-slate-600 text-3xl font-semibold rounded-xl">
-            {getInitials(name)}
-          </div>
-        )}
+      <div className="relative w-full aspect-square p-6 bg-slate-200 flex items-center justify-center">
+        <div className="w-32 h-32 flex items-center justify-center text-slate-600 text-3xl font-semibold rounded-xl">
+          {getInitials(name)}
+        </div>
         <div className="absolute top-4 right-4 flex flex-col gap-2">
           <span className="bg-white shadow-sm text-blue-600 px-3 py-1.5 rounded-lg text-sm font-bold">
             LKR {price.toFixed(2)}
