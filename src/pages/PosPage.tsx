@@ -89,7 +89,7 @@ const PosPage = () => {
   const handleAddToOrder = (product: Product, quantity: number, discount: number) => {
     setOrderItems(items => {
       const existingItem = items.find(item => item.productId === Number(product.productId));
-      const price = product.salePrice * (1 - discount / 100);
+      const price = Math.max(0, product.salePrice - discount); // Apply absolute discount
       const totalPrice = price * quantity;
       if (existingItem) {
         return items.map(item =>

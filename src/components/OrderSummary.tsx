@@ -17,6 +17,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+  const [orderDiscount, setOrderDiscount] = useState<number>(0);
 
   // Helper to get product info
   const getProduct = (productId: number) => {
@@ -34,7 +35,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   }, 0);
 
   const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const total = subtotal;
+  const totalDiscount = Math.min(orderDiscount, subtotal);
+  const total = subtotal - totalDiscount;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
@@ -132,13 +134,30 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="font-medium">{formatLKR(originalTotal)}</span>
           </div>
           <div className="flex justify-between mb-2 text-red-600">
-            <span>Total Discount</span>
+            <span>Item Discounts</span>
             <span>-{formatLKR(discountTotal)}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-gray-600">Subtotal</span>
             <span className="font-medium">{formatLKR(subtotal)}</span>
           </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600">Order Discount (LKR)</span>
+            <input
+              type="number"
+              min="0"
+              max={subtotal}
+              value={orderDiscount}
+              onChange={(e) => setOrderDiscount(Math.min(subtotal, Math.max(0, Number(e.target.value))))}
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
+            />
+          </div>
+          {orderDiscount > 0 && (
+            <div className="flex justify-between mb-2 text-red-600">
+              <span>Order Discount</span>
+              <span>-{formatLKR(totalDiscount)}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-4">
             <span className="font-bold text-black">Total</span>
             <span className="font-bold text-blue-600">{formatLKR(total)}</span>
