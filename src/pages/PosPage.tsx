@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import CategoryScroll from '../components/CategoryScroll';
 import { getAllCategories, type Category } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
-import { getAllProducts  } from '../services/ProductService';
+import { getActiveProducts  } from '../services/ProductService';
 import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
 import type { Sale, SaleDTO, SaleItemDTO } from '../types/Sale';
@@ -44,7 +44,7 @@ const PosPage = () => {
         const [categoriesData, brandsData, productsData] = await Promise.all([
           getAllCategories(),
           getAllBrands(),
-          getAllProducts()
+          getActiveProducts()
         ]);
         
         setCategories([

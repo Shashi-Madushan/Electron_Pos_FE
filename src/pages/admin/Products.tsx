@@ -160,10 +160,14 @@ const Products: React.FC = () => {
         resetModal();
     };
 
+    // Add a state to track the selected/edited product for row highlight
+    const [selectedProductId, setSelectedProductId] = useState<string | null>(null);
+
     const handleEditProduct = (product: Product) => {
         setNewProduct(product);
         setEditingProduct(product);
         setIsModalOpen(true);
+        setSelectedProductId(product.productId); // highlight row
     };
 
     const handleDeleteProduct = async (id: string) => {
@@ -188,6 +192,7 @@ const Products: React.FC = () => {
         });
         setEditingProduct(null);
         setIsModalOpen(false);
+        setSelectedProductId(null); // remove highlight
     };
 
     const handleImageUpload = (file: File) => {
@@ -235,6 +240,11 @@ const Products: React.FC = () => {
         }
     };
 
+    const handleToggleActive = async (product: Product) => {
+        const updatedProduct = { ...product, isActive: !product.isActive };
+        await updateProduct(product.productId, updatedProduct);
+        fetchProducts();
+    };
 
     return (
         <div className="min-h-screen bg-white p-4 md:p-8">
@@ -322,92 +332,122 @@ const Products: React.FC = () => {
                 <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
                     {viewMode === 'table' ? (
                         /* Table View */
-                        <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
-                            <table className="w-full">
-                                <thead className='sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200'>
-                                <tr>
-                                    <th className="p-4 text-left font-semibold">Product</th>
-                                    <th className="p-4 text-left font-semibold">Barcode</th>
-                                    <th className="p-4 text-left font-semibold">Category</th>
-                                    <th className="p-4 text-left font-semibold">Brand</th>
-                                    <th className="p-4 text-left font-semibold">Cost</th>
-                                    <th className="p-4 text-left font-semibold">Sale Price</th>
-                                    <th className="p-4 text-left font-semibold">Stock</th>
-                                    <th className="p-4 text-left font-semibold">Actions</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {filteredAndSortedProducts.map((product, index) => (
-                                    <tr
-                                        key={product.productId}
-                                        className={`border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 ${
-                                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                        }`}
-                                    >
-                                        <td className="p-4">
-                                            <div className="flex items-center gap-3">
-                                                <img
-                                                    src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
-                                                    alt={product.productName}
-                                                    className="w-10 h-10 rounded object-cover border border-gray-200"
-                                                    onError={(e) => {
-                                                        const target = e.target as HTMLImageElement;
-                                                        target.src = `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`;
-                                                    }}
-                                                />
-                                                <div>
-                                                    <p className="font-medium text-black">{product.productName}</p>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="text-black">{product.barcode}</span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                {getCategoryName(product.categoryId)}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                {getBrandName(product.brandId)}
-                                            </span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="text-black">LKR {product.cost}</span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="text-black">LKR {product.salePrice}</span>
-                                        </td>
-                                        <td className="p-4">
-                                            <span className="font-medium text-black">{product.qty}</span>
-                                        </td>
-                                        <td className="p-4">
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleEditProduct(product)}
-                                                    className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteProduct(product.productId)}
-                                                    className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                                                >
-                                                    Delete
-                                                </button>
-                                                <button
-                                                    onClick={() => handleGenerateBarcodeClick(product)}
-                                                    className="text-green-600 px-3 py-1 text-sm font-medium border border-green-100 rounded hover:bg-green-50"
-                                                >
-                                                    Generate
-                                                </button>
-                                            </div>
-                                        </td>
+                        <div className="w-full">
+                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-20rem)]">
+                                <table className="w-full min-w-[1200px] table-auto">
+                                    <thead className="bg-blue-50 text-black border-b border-gray-200">
+                                    <tr>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[200px]">Product</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[120px]">Barcode</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Category</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Brand</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Cost</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Sale Price</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[80px]">Stock</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Active</th>
+                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[320px]">Actions</th>
                                     </tr>
-                                ))}
-                                </tbody>
-                            </table>
+                                    </thead>
+                                    <tbody>
+                                    {filteredAndSortedProducts.map((product, index) => (
+                                        <tr
+                                            key={product.productId}
+                                            className={
+                                                `border-b border-gray-100 transition-all duration-200 group
+                                                ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                                                hover:bg-blue-50/70
+                                                ${selectedProductId === product.productId ? 'ring-2 ring-blue-400 bg-blue-50/80' : ''}`
+                                            }
+                                        >
+                                            <td className="p-4 whitespace-nowrap min-w-[200px]">
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
+                                                        alt={product.productName}
+                                                        className="w-10 h-10 rounded object-cover border border-gray-200 flex-shrink-0"
+                                                        onError={(e) => {
+                                                            const target = e.target as HTMLImageElement;
+                                                            target.src = `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`;
+                                                        }}
+                                                    />
+                                                    <div className="min-w-0">
+                                                        <p className="font-medium text-black truncate" title={product.productName}>{product.productName}</p>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[120px]">
+                                                <span className="text-black text-sm">{product.barcode}</span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
+                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
+                                                    {getCategoryName(product.categoryId)}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
+                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
+                                                    {getBrandName(product.brandId)}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
+                                                <span className="text-black text-sm">LKR {product.cost}</span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
+                                                <span className="text-black text-sm">LKR {product.salePrice}</span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[80px]">
+                                                <span className="font-medium text-black">{product.qty}</span>
+                                            </td>
+                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
+                                                <span className={`px-2 py-1 rounded text-xs font-semibold border
+                                                    ${product.isActive
+                                                        ? 'bg-blue-50 text-blue-700 border-blue-100'
+                                                        : 'bg-red-50 text-red-700 border-red-100'
+                                                    }`}>
+                                                    {product.isActive ? 'Active' : 'Deactivated'}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 min-w-[320px]">
+                                                <div className="flex gap-2 flex-nowrap">
+                                                    <button
+                                                        onClick={() => handleEditProduct(product)}
+                                                        title="Edit Product"
+                                                        className="text-blue-600 px-3 py-1.5 text-xs font-medium border border-blue-100 rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 flex-shrink-0"
+                                                    >
+                                                        Edit
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product.productId)}
+                                                        title="Delete Product"
+                                                        className="text-red-600 px-3 py-1.5 text-xs font-medium border border-red-100 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 flex-shrink-0"
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleGenerateBarcodeClick(product)}
+                                                        title="Generate Barcode"
+                                                        className="text-green-600 px-3 py-1.5 text-xs font-medium border border-green-100 rounded hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 flex-shrink-0"
+                                                    >
+                                                        Generate
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleToggleActive(product)}
+                                                        title={product.isActive ? "Deactivate Product" : "Activate Product"}
+                                                        className={`px-3 py-1.5 text-xs font-medium rounded border flex-shrink-0
+                                                            ${product.isActive
+                                                                ? 'text-white bg-red-600 border-red-600 hover:bg-red-700'
+                                                                : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
+                                                            }
+                                                            focus:outline-none focus:ring-2 focus:ring-blue-300`}
+                                                    >
+                                                        {product.isActive ? 'Deactivate' : 'Activate'}
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    </tbody>
+                                </table>
+                            </div>
                             {filteredAndSortedProducts.length === 0 && (
                                 <div className="text-center py-12">
                                     <p className="text-gray-500 text-lg">No products found matching your criteria</p>
@@ -417,7 +457,7 @@ const Products: React.FC = () => {
                     ) : (
                         /* Grid View */
                         <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredAndSortedProducts.map((product) => (
                                     <div
                                         key={product.productId}
@@ -454,6 +494,11 @@ const Products: React.FC = () => {
                                                 <span className="text-black text-sm">Price: </span>
                                                 <span className="font-semibold text-blue-700">LKR {product.salePrice}</span>
                                             </div>
+                                            <div className="mb-2">
+                                                <span className={`px-2 py-1 rounded text-xs font-medium border ${product.isActive ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
+                                                    {product.isActive ? 'Active' : 'Deactivated'}
+                                                </span>
+                                            </div>
                                             <div className="flex gap-2">
                                                 <button
                                                     onClick={() => handleEditProduct(product)}
@@ -472,6 +517,12 @@ const Products: React.FC = () => {
                                                     className="text-green-600 px-3 py-1 text-sm font-medium border border-green-100 rounded hover:bg-green-50"
                                                 >
                                                     Generate
+                                                </button>
+                                                <button
+                                                    onClick={() => handleToggleActive(product)}
+                                                    className={`px-3 py-1 text-sm font-medium rounded border ${product.isActive ? 'text-white bg-red-600 border-red-600 hover:bg-red-700' : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'}`}
+                                                >
+                                                    {product.isActive ? 'Deactivate' : 'Activate'}
                                                 </button>
                                             </div>
                                         </div>
@@ -621,6 +672,18 @@ const Products: React.FC = () => {
                                     className="w-full p-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 text-black"
                                 />
                             </div>
+                            {/* <div className="flex items-center gap-2">
+                                <input
+                                    type="checkbox"
+                                    id="isActive"
+                                    checked={newProduct.isActive}
+                                    onChange={e => setNewProduct({ ...newProduct, isActive: e.target.checked })}
+                                    className="mr-2"
+                                />
+                                <label htmlFor="isActive" className="text-sm font-medium text-black">
+                                    Active
+                                </label>
+                            </div> */}
                         </div>
                         <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
                             <button

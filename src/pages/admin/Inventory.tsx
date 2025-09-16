@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProductsWithLowQty, getAllProducts, updateProduct } from '../../services/ProductService';
+import { getProductsWithLowQty, updateProduct, getActiveProducts } from '../../services/ProductService';
 import { getAllCategories } from '../../services/CategoryService';
 
 interface Product {
@@ -48,7 +48,7 @@ const Inventory: React.FC = () => {
         } catch (lowStockError) {
           console.warn("Low stock endpoint failed, filtering all products:", lowStockError);
           // Fallback: get all products and filter for low stock
-          const allProductsResponse = await getAllProducts();
+          const allProductsResponse = await getActiveProducts();
           const allProducts = allProductsResponse?.productDTOList || [];
           const lowStockProducts = allProducts.filter((product: Product) => product.qty < 10);
           setLowStockProducts(lowStockProducts);

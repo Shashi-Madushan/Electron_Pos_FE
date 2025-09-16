@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { getAllCategories } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
-import { getAllProducts } from '../services/ProductService';
+import { getActiveProducts } from '../services/ProductService';
 
 interface Product {
     productId: string;
@@ -48,7 +48,7 @@ const InventoryPage: React.FC = () => {
     };
 
     const fetchProducts = async () => {
-        const response = await getAllProducts();
+        const response = await getActiveProducts();
         setProducts(response.productDTOList);
     };
 
@@ -244,7 +244,7 @@ const InventoryPage: React.FC = () => {
                                                 </span>
                                             </td>
                                             <td className="p-4">
-                                                <span className="text-black">${product.salePrice}</span>
+                                                <span className="text-black">LKR {product.salePrice}</span>
                                             </td>
                                             <td className="p-4">
                                                 <span className="font-medium text-black">{product.qty}</span>
