@@ -151,6 +151,8 @@ const PosPage = () => {
       totalAmount += item.price * item.qty;
       totalDiscount += (originalPrice - item.price) * item.qty;
     });
+    totalDiscount += orderTotals.orderDiscount;
+    totalAmount -= orderTotals.orderDiscount;
     return { totalAmount, totalDiscount };
   };
 
