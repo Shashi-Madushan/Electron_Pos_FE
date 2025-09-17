@@ -5,6 +5,7 @@ import { deleteProduct, getAllProducts, saveProduct, updateProduct } from '../..
 import Barcode from 'react-barcode';
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';
+import AdminProduct from '../../components/admin/AdminProduct';
 
 interface Product {
     productId: string;
@@ -250,10 +251,10 @@ const Products: React.FC = () => {
         <div className="min-h-screen bg-white p-4 md:p-8">
             <div className="max-w-8xl mx-auto">
                 {/* Controls Section */}
-                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200">
+                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200" >
                     <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
                         {/* Search */}
-                        <div className="relative flex-1 max-w-md">
+                        <div className=" flex-1 max-w-md">
                             <input
                                 type="text"
                                 placeholder="Search products..."
@@ -333,117 +334,33 @@ const Products: React.FC = () => {
                     {viewMode === 'table' ? (
                         /* Table View */
                         <div className="w-full">
-                            <div className="overflow-x-auto overflow-y-auto max-h-[calc(100vh-20rem)]">
-                                <table className="w-full min-w-[1200px] table-auto">
+                            <div className="overflow-y-auto max-h-[calc(100vh-20rem)]">
+                                <table className="w-full table-auto">
                                     <thead className="bg-blue-50 text-black border-b border-gray-200">
                                     <tr>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[200px]">Product</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[120px]">Barcode</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Category</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Brand</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Cost</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Sale Price</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[80px]">Stock</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[100px]">Active</th>
-                                        <th className="p-4 text-left font-semibold whitespace-nowrap min-w-[320px]">Actions</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[220px]">Product</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[140px]">Category & Brand</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[100px]">Cost</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[100px]">Sale Price</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[120px]">Stock</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[100px]">Status</th>
+                                        <th className="p-3 text-left font-semibold whitespace-nowrap min-w-[180px]">Actions</th>
                                     </tr>
                                     </thead>
                                     <tbody>
-                                    {filteredAndSortedProducts.map((product, index) => (
-                                        <tr
+                                    {filteredAndSortedProducts.map((product) => (
+                                        <AdminProduct
                                             key={product.productId}
-                                            className={
-                                                `border-b border-gray-100 transition-all duration-200 group
-                                                ${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
-                                                hover:bg-blue-50/70
-                                                ${selectedProductId === product.productId ? 'ring-2 ring-blue-400 bg-blue-50/80' : ''}`
-                                            }
-                                        >
-                                            <td className="p-4 whitespace-nowrap min-w-[200px]">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
-                                                        alt={product.productName}
-                                                        className="w-10 h-10 rounded object-cover border border-gray-200 flex-shrink-0"
-                                                        onError={(e) => {
-                                                            const target = e.target as HTMLImageElement;
-                                                            target.src = `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`;
-                                                        }}
-                                                    />
-                                                    <div className="min-w-0">
-                                                        <p className="font-medium text-black truncate" title={product.productName}>{product.productName}</p>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[120px]">
-                                                <span className="text-black text-sm">{product.barcode}</span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getCategoryName(product.categoryId)}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getBrandName(product.brandId)}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
-                                                <span className="text-black text-sm">LKR {product.cost}</span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
-                                                <span className="text-black text-sm">LKR {product.salePrice}</span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[80px]">
-                                                <span className="font-medium text-black">{product.qty}</span>
-                                            </td>
-                                            <td className="p-4 whitespace-nowrap min-w-[100px]">
-                                                <span className={`px-2 py-1 rounded text-xs font-semibold border
-                                                    ${product.isActive
-                                                        ? 'bg-blue-50 text-blue-700 border-blue-100'
-                                                        : 'bg-red-50 text-red-700 border-red-100'
-                                                    }`}>
-                                                    {product.isActive ? 'Active' : 'Deactivated'}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 min-w-[320px]">
-                                                <div className="flex gap-2 flex-nowrap">
-                                                    <button
-                                                        onClick={() => handleEditProduct(product)}
-                                                        title="Edit Product"
-                                                        className="text-blue-600 px-3 py-1.5 text-xs font-medium border border-blue-100 rounded hover:bg-blue-50 focus:outline-none focus:ring-2 focus:ring-blue-300 flex-shrink-0"
-                                                    >
-                                                        Edit
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteProduct(product.productId)}
-                                                        title="Delete Product"
-                                                        className="text-red-600 px-3 py-1.5 text-xs font-medium border border-red-100 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300 flex-shrink-0"
-                                                    >
-                                                        Delete
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleGenerateBarcodeClick(product)}
-                                                        title="Generate Barcode"
-                                                        className="text-green-600 px-3 py-1.5 text-xs font-medium border border-green-100 rounded hover:bg-green-50 focus:outline-none focus:ring-2 focus:ring-green-300 flex-shrink-0"
-                                                    >
-                                                        Generate
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleToggleActive(product)}
-                                                        title={product.isActive ? "Deactivate Product" : "Activate Product"}
-                                                        className={`px-3 py-1.5 text-xs font-medium rounded border flex-shrink-0
-                                                            ${product.isActive
-                                                                ? 'text-white bg-red-600 border-red-600 hover:bg-red-700'
-                                                                : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'
-                                                            }
-                                                            focus:outline-none focus:ring-2 focus:ring-blue-300`}
-                                                    >
-                                                        {product.isActive ? 'Deactivate' : 'Activate'}
-                                                    </button>
-                                                </div>
-                                            </td>
-                                        </tr>
+                                            product={product}
+                                            getCategoryName={getCategoryName}
+                                            getBrandName={getBrandName}
+                                            onEdit={handleEditProduct}
+                                            onDelete={handleDeleteProduct}
+                                            onGenerateBarcode={handleGenerateBarcodeClick}
+                                            onToggleActive={handleToggleActive}
+                                            isSelected={selectedProductId === product.productId}
+                                            viewMode={viewMode}
+                                        />
                                     ))}
                                     </tbody>
                                 </table>
@@ -459,74 +376,17 @@ const Products: React.FC = () => {
                         <div className="p-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                                 {filteredAndSortedProducts.map((product) => (
-                                    <div
+                                    <AdminProduct
                                         key={product.productId}
-                                        className="bg-white rounded border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
-                                    >
-                                        <div className="relative">
-                                            <img
-                                                src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
-                                                alt={product.productName}
-                                                className="w-full h-40 object-cover border-b border-gray-100"
-                                                onError={(e) => {
-                                                    const target = e.target as HTMLImageElement;
-                                                    target.src = `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`;
-                                                }}
-                                            />
-                                        </div>
-                                        <div className="p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getCategoryName(product.categoryId)}
-                                                </span>
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getBrandName(product.brandId)}
-                                                </span>
-                                            </div>
-                                            <div className="mb-2">
-                                                <span className="text-lg font-semibold text-black">{product.productName}</span>
-                                            </div>
-                                            <div className="mb-2">
-                                                <span className="text-black text-sm">Stock: </span>
-                                                <span className="font-medium text-black">{product.qty}</span>
-                                            </div>
-                                            <div className="mb-4">
-                                                <span className="text-black text-sm">Price: </span>
-                                                <span className="font-semibold text-blue-700">LKR {product.salePrice}</span>
-                                            </div>
-                                            <div className="mb-2">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium border ${product.isActive ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
-                                                    {product.isActive ? 'Active' : 'Deactivated'}
-                                                </span>
-                                            </div>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleEditProduct(product)}
-                                                    className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                                                >
-                                                    Edit
-                                                </button>
-                                                <button
-                                                    onClick={() => handleDeleteProduct(product.productId)}
-                                                    className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                                                >
-                                                    Delete
-                                                </button>
-                                                <button
-                                                    onClick={() => handleGenerateBarcodeClick(product)}
-                                                    className="text-green-600 px-3 py-1 text-sm font-medium border border-green-100 rounded hover:bg-green-50"
-                                                >
-                                                    Generate
-                                                </button>
-                                                <button
-                                                    onClick={() => handleToggleActive(product)}
-                                                    className={`px-3 py-1 text-sm font-medium rounded border ${product.isActive ? 'text-white bg-red-600 border-red-600 hover:bg-red-700' : 'text-white bg-blue-600 border-blue-600 hover:bg-blue-700'}`}
-                                                >
-                                                    {product.isActive ? 'Deactivate' : 'Activate'}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        product={product}
+                                        getCategoryName={getCategoryName}
+                                        getBrandName={getBrandName}
+                                        onEdit={handleEditProduct}
+                                        onDelete={handleDeleteProduct}
+                                        onGenerateBarcode={handleGenerateBarcodeClick}
+                                        onToggleActive={handleToggleActive}
+                                        viewMode={viewMode}
+                                    />
                                 ))}
                             </div>
                             {filteredAndSortedProducts.length === 0 && (
