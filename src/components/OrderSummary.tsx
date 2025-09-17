@@ -32,22 +32,28 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     return products.find(p => Number(p.productId) === productId);
   };
 
+  // Update calculations
   const originalTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
     const originalPrice = product?.salePrice || 0;
     return sum + originalPrice * item.qty;
   }, 0);
 
-  const discountTotal = items.reduce((sum, item) => {
+  const itemDiscounts = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
     const originalPrice = product?.salePrice || 0;
-    const discountAmount = originalPrice * (item.discount / 100);
-    return sum + discountAmount * item.qty;
+    return sum + (originalPrice - item.price) * item.qty;
   }, 0);
 
-  const subtotal = originalTotal - discountTotal;
-  const totalDiscount = Math.min(subtotal, subtotal * (orderDiscount / 100));
-  const total = subtotal - totalDiscount;
+  const subtotal = items.reduce((sum, item) => {
+    return sum + item.price * item.qty;
+  }, 0);
+
+  // Calculate order discount amount based on percentage
+  const orderDiscountAmount = (subtotal * orderDiscount) / 100;
+  
+  // Calculate final total after all discounts
+  // const total = subtotal - orderDiscountAmount;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
@@ -69,15 +75,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   // Add useEffect to notify parent of changes
   useEffect(() => {
     if (onOrderTotalsChange) {
-      onOrderTotalsChange({
+      const totals = {
         originalTotal,
-        itemDiscounts: discountTotal,
+        itemDiscounts,
         subtotal,
         orderDiscountPercentage: orderDiscount,
-        orderDiscount: totalDiscount
-      });
+        orderDiscount: orderDiscountAmount
+      };
+      onOrderTotalsChange(totals);
     }
-  }, [originalTotal, discountTotal, subtotal, orderDiscount, totalDiscount]);
+  }, [originalTotal, itemDiscounts, subtotal, orderDiscount, orderDiscountAmount, onOrderTotalsChange]);
+
+  // Update total calculation
+  const total = subtotal - orderDiscountAmount;
 
   if (items.length === 0) {
     return (
@@ -159,7 +169,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           </div>
           <div className="flex justify-between mb-2 text-red-600">
             <span>Item Discounts</span>
-            <span>-{formatLKR(discountTotal)}</span>
+            <span>-{formatLKR(itemDiscounts)}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-gray-600">Subtotal</span>
@@ -179,7 +189,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           {orderDiscount > 0 && (
             <div className="flex justify-between mb-2 text-red-600">
               <span>Order Discount</span>
-              <span>-{formatLKR(totalDiscount)}</span>
+              <span>-{formatLKR(orderDiscountAmount)}</span>
             </div>
           )}
           <div className="flex justify-between mb-4">

@@ -187,29 +187,29 @@ const PosPage = () => {
   const handleCheckout = async () => {
     const saleDTO = prepareSaleDTO();
     console.log('Prepared SaleDTO:', saleDTO);
-    // try {
-    //   const response = await saveSale(saleDTO);
-    //   if (response.statusCode === 201) {
-    //     // Create a complete sale object combining response and prepared data
-    //     const newSaleData: Sale = {
-    //       ...mapSaleDTOToSale(response.saleDTO),
-    //       saleItems: saleDTO.saleItems.map(item => ({
-    //         saleItemId: 0, // We'll use a counter if needed
-    //         saleId: response.saleDTO.saleId || 0,
-    //         productId: item.productId,
-    //         qty: item.qty,
-    //         price: item.price,
-    //         discount: item.discount
-    //       }))
-    //     };
+    try {
+      const response = await saveSale(saleDTO);
+      if (response.statusCode === 201) {
+        // Create a complete sale object combining response and prepared data
+        const newSaleData: Sale = {
+          ...mapSaleDTOToSale(response.saleDTO),
+          saleItems: saleDTO.saleItems.map(item => ({
+            saleItemId: 0, // We'll use a counter if needed
+            saleId: response.saleDTO.saleId || 0,
+            productId: item.productId,
+            qty: item.qty,
+            price: item.price,
+            discount: item.discount
+          }))
+        };
         
-    //     setSaleData(newSaleData);
-    //     setShowReceipt(true);
-    //     setOrderItems([]); // Clear the order items
-    //   }
-    // } catch (error) {
-    //   console.error('Error during checkout:', error);
-    // }
+        setSaleData(newSaleData);
+        setShowReceipt(true);
+        setOrderItems([]); // Clear the order items
+      }
+    } catch (error) {
+      console.error('Error during checkout:', error);
+    }
   };
 
   const handleRemoveItem = (productId: string) => {
