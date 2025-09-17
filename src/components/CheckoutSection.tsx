@@ -7,6 +7,20 @@ interface CheckoutSectionProps {
   orderItems: SaleItemDTO[];
   products: Product[];
   paymentMethod: string;
+  orderTotals: {
+    originalTotal: number;
+    itemDiscounts: number;
+    subtotal: number;
+    orderDiscountPercentage: number;
+    orderDiscount: number;
+  };
+  onOrderTotalsChange: (totals: {
+    originalTotal: number;
+    itemDiscounts: number;
+    subtotal: number;
+    orderDiscountPercentage: number;
+    orderDiscount: number;
+  }) => void;
   onUpdateQuantity: (productId: string, change: number) => void;
   onRemoveItem: (productId: string) => void;
   onPaymentMethodChange: (method: string) => void;
@@ -22,7 +36,8 @@ const CheckoutSection: React.FC<CheckoutSectionProps> = ({
   onRemoveItem,
   onPaymentMethodChange,
   onCheckout,
-  onClear
+  onClear,
+  onOrderTotalsChange
 }) => {
   return (
     <div className="w-96 h-full flex flex-col">
@@ -31,6 +46,7 @@ const CheckoutSection: React.FC<CheckoutSectionProps> = ({
         products={products}
         onUpdateQuantity={onUpdateQuantity}
         onRemoveItem={onRemoveItem}
+        onOrderTotalsChange={onOrderTotalsChange}
       />
       <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
         <div className="mb-2">

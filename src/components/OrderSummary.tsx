@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { SaleItemDTO } from '../types/Sale';
 import type { Product } from '../types/Product';
 
@@ -7,6 +7,13 @@ interface OrderSummaryProps {
   products: Product[];
   onUpdateQuantity: (productId: string, change: number) => void;
   onRemoveItem: (productId: string) => void;
+  onOrderTotalsChange?: (totals: {
+    originalTotal: number;
+    itemDiscounts: number;
+    subtotal: number;
+    orderDiscountPercentage: number;
+    orderDiscount: number;
+  }) => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({
@@ -14,6 +21,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   products,
   onUpdateQuantity,
   onRemoveItem,
+  onOrderTotalsChange,
 }) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
@@ -57,6 +65,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     setShowConfirmation(false);
     setItemToRemove(null);
   };
+
+  // Add useEffect to notify parent of changes
+  useEffect(() => {
+    if (onOrderTotalsChange) {
+      onOrderTotalsChange({
+        originalTotal,
+        itemDiscounts: discountTotal,
+        subtotal,
+        orderDiscountPercentage: orderDiscount,
+        orderDiscount: totalDiscount
+      });
+    }
+  }, [originalTotal, discountTotal, subtotal, orderDiscount, totalDiscount]);
 
   if (items.length === 0) {
     return (

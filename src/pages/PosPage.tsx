@@ -37,6 +37,13 @@ const PosPage = () => {
   const barcodeInputRef = useRef<HTMLInputElement>(null!);
   const [showReceipt, setShowReceipt] = useState(false);
   const [saleData, setSaleData] = useState<Sale | null>(null);
+  const [orderTotals, setOrderTotals] = useState({
+    originalTotal: 0,
+    itemDiscounts: 0,
+    subtotal: 0,
+    orderDiscountPercentage: 0,
+    orderDiscount: 0
+  });
 
   useEffect(() => {
     const fetchData = async () => {
@@ -150,6 +157,7 @@ const PosPage = () => {
   // Prepare SaleDTO for sending
   const prepareSaleDTO = (): SaleDTO => {
     const { totalAmount, totalDiscount } = getTotals();
+    
     return {
       saleId: null,
       saleDate: null,
@@ -158,6 +166,11 @@ const PosPage = () => {
       paymentMethod,
       userId,
       customerId,
+      originalTotal: orderTotals.originalTotal,
+      itemDiscounts: orderTotals.itemDiscounts,
+      subtotal: orderTotals.subtotal,
+      orderDiscountPercentage: orderTotals.orderDiscountPercentage,
+      orderDiscount: orderTotals.orderDiscount,
       saleItems: orderItems.map(item => ({
         saleItemId: null,
         saleId: null,
@@ -173,29 +186,30 @@ const PosPage = () => {
   // Updated handleCheckout function with detailed logging
   const handleCheckout = async () => {
     const saleDTO = prepareSaleDTO();
-    try {
-      const response = await saveSale(saleDTO);
-      if (response.statusCode === 201) {
-        // Create a complete sale object combining response and prepared data
-        const newSaleData: Sale = {
-          ...mapSaleDTOToSale(response.saleDTO),
-          saleItems: saleDTO.saleItems.map(item => ({
-            saleItemId: 0, // We'll use a counter if needed
-            saleId: response.saleDTO.saleId || 0,
-            productId: item.productId,
-            qty: item.qty,
-            price: item.price,
-            discount: item.discount
-          }))
-        };
+    console.log('Prepared SaleDTO:', saleDTO);
+    // try {
+    //   const response = await saveSale(saleDTO);
+    //   if (response.statusCode === 201) {
+    //     // Create a complete sale object combining response and prepared data
+    //     const newSaleData: Sale = {
+    //       ...mapSaleDTOToSale(response.saleDTO),
+    //       saleItems: saleDTO.saleItems.map(item => ({
+    //         saleItemId: 0, // We'll use a counter if needed
+    //         saleId: response.saleDTO.saleId || 0,
+    //         productId: item.productId,
+    //         qty: item.qty,
+    //         price: item.price,
+    //         discount: item.discount
+    //       }))
+    //     };
         
-        setSaleData(newSaleData);
-        setShowReceipt(true);
-        setOrderItems([]); // Clear the order items
-      }
-    } catch (error) {
-      console.error('Error during checkout:', error);
-    }
+    //     setSaleData(newSaleData);
+    //     setShowReceipt(true);
+    //     setOrderItems([]); // Clear the order items
+    //   }
+    // } catch (error) {
+    //   console.error('Error during checkout:', error);
+    // }
   };
 
   const handleRemoveItem = (productId: string) => {
@@ -263,11 +277,13 @@ const PosPage = () => {
             orderItems={orderItems}
             products={products}
             paymentMethod={paymentMethod}
+            orderTotals={orderTotals}
             onUpdateQuantity={handleUpdateQuantity}
             onRemoveItem={handleRemoveItem}
             onPaymentMethodChange={setPaymentMethod}
             onCheckout={handleCheckout}
             onClear={() => setOrderItems([])}
+            onOrderTotalsChange={setOrderTotals}
           />
 
           {/* Modals */}
