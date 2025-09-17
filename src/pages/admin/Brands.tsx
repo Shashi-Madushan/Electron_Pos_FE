@@ -123,32 +123,24 @@ const Brands: React.FC = () => {
   return (
     <div className="min-h-screen bg-white p-4 md:p-8">
       <div className="max-w-4xl mx-auto">
+
         {/* Content Section */}
-        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+        <div className="bg-white shadow-lg rounded-xl border border-gray-200 overflow-hidden">
           {/* Search Bar above the table */}
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-6 pt-6">
-            <h1 className="text-2xl font-bold text-black flex-1">Brand Management</h1>
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 px-6 pt-6 pb-4 border-b border-gray-100 bg-blue-50">
             <div className="relative flex-1 max-w-md w-full">
               <input
                 type="text"
                 placeholder="Search brands..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
+                className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black shadow-sm"
               />
               <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 text-lg pointer-events-none">
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
               </span>
             </div>
-            <button
-              className="bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-all duration-200 border border-blue-600 shadow"
-              onClick={() => {
-                setModalBrand({ brandName: '' });
-                setModalOpen(true);
-              }}
-            >
-              Add Brand
-            </button>
+
           </div>
           {/* Table */}
           {loading ? (
@@ -158,11 +150,12 @@ const Brands: React.FC = () => {
           ) : (
             <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
               <table className="w-full">
-                <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
+                <thead className="sticky top-0 z-10 bg-blue-100 text-blue-700 border-b border-gray-200">
                   <tr>
                     <th className="p-4 text-left font-semibold">ID</th>
                     <th className="p-4 text-left font-semibold">Brand Name</th>
-                    <th className="p-4 text-left font-semibold">Actions</th>
+                    <th className="p-4 text-left font-semibold">Edit</th>
+                    {/* <th className="p-4 text-left font-semibold">Delete</th> */}
                   </tr>
                 </thead>
                 <tbody>
@@ -187,24 +180,24 @@ const Brands: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2">
-                            <button
-                              className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                              onClick={() => {
-                                setModalBrand({ ...brand });
-                                setModalOpen(true);
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                              onClick={() => setDeleteId(brand.brandId)}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-100 w-full transition-all duration-150"
+                            onClick={() => {
+                              setModalBrand({ ...brand });
+                              setModalOpen(true);
+                            }}
+                          >
+                            Edit
+                          </button>
                         </td>
+                        {/* <td className="p-4">
+                          <button
+                            className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-100 w-full transition-all duration-150"
+                            onClick={() => setDeleteId(brand.brandId)}
+                          >
+                            Delete
+                          </button>
+                        </td> */}
                       </tr>
                     ))
                   )}
@@ -230,9 +223,9 @@ const Brands: React.FC = () => {
       {/* Add/Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200 overflow-hidden max-h-[90vh] overflow-y-auto">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-semibold text-black">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md border border-gray-200 overflow-hidden max-h-[90vh] overflow-y-auto">
+            <div className="border-b border-gray-200 px-6 py-4 bg-blue-50">
+              <h2 className="text-xl font-semibold text-blue-700">
                 {modalBrand?.brandId ? 'Edit Brand' : 'Add New Brand'}
               </h2>
               <p className="text-gray-500 text-sm mt-1">
@@ -254,7 +247,7 @@ const Brands: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+              <div className="bg-gray-50 px-6 py-4 flex flex-col gap-3 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -279,13 +272,13 @@ const Brands: React.FC = () => {
       {/* Delete Confirmation */}
       {deleteId !== null && (
         <div className="fixed inset-0 flex items-center justify-center bg-black/40 z-50 p-4">
-          <div className="bg-white rounded-lg shadow-2xl w-full max-w-md border border-gray-200 overflow-hidden">
-            <div className="border-b border-gray-200 px-6 py-4">
-              <h2 className="text-xl font-semibold text-black">Delete Brand</h2>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md border border-gray-200 overflow-hidden">
+            <div className="border-b border-gray-200 px-6 py-4 bg-red-50">
+              <h2 className="text-xl font-semibold text-red-700">Delete Brand</h2>
             </div>
             <div className="p-6">
               <p className="text-black mb-4">Are you sure you want to delete this brand?</p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 <button
                   className="flex-1 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 font-medium"
                   onClick={cancelDelete}
