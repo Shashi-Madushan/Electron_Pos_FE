@@ -214,31 +214,33 @@ const UserManagement: React.FC = () => {
                       {user.isActive ? 'Active' : 'Inactive'}
                     </button>
                   </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                        <button
-                            onClick={() => handleEditUser(user)}
-                            className="text-blue-600 hover:text-blue-900 mr-2"
-                        >
-                            Edit
-                        </button>
-                        <button
-                            onClick={() => handleDeleteClick(user.userId.toString())}
-                            className="text-red-600 hover:text-red-900 mr-2"
-                        >
-                            Delete
-                        </button>
-                        <button
-                            onClick={() => {
-                                setPasswordUser(user);
-                                setNewPassword('');
-                                setConfirmPassword('');
-                                setShowPasswordModal(true);
-                            }}
-                            className="text-green-600 hover:text-green-900"
-                        >
-                            Change Password
-                        </button>
-                    </td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEditUser(user)}
+                        className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors duration-150"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteClick(user.userId.toString())}
+                        className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors duration-150"
+                      >
+                        Delete
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPasswordUser(user);
+                          setNewPassword('');
+                          setConfirmPassword('');
+                          setShowPasswordModal(true);
+                        }}
+                        className="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 transition-colors duration-150"
+                      >
+                        Change Password
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))
             ) : (
