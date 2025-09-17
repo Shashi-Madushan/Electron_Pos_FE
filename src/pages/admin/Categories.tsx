@@ -133,7 +133,8 @@ const CategoryPage: React.FC = () => {
                 <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
                   <tr>
                     <th className="p-4 text-left font-semibold">Category Name</th>
-                    <th className="p-4 text-left font-semibold">Actions</th>
+                    <th className="p-4 text-left font-semibold">Edit</th>
+                    <th className="p-4 text-left font-semibold">Delete</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -146,20 +147,20 @@ const CategoryPage: React.FC = () => {
                     >
                       <td className="p-4 text-black font-medium">{category.name}</td>
                       <td className="p-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditCategory(category)}
-                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(Number(category.categoryId))}
-                            className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
+                        <button
+                          onClick={() => handleEditCategory(category)}
+                          className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
+                        >
+                          Edit
+                        </button>
+                      </td>
+                      <td className="p-4">
+                        <button
+                          onClick={() => handleDeleteCategory(Number(category.categoryId))}
+                          className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50 w-full"
+                        >
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -189,16 +190,16 @@ const CategoryPage: React.FC = () => {
                         </div>
                       </div>
                     </div>
-                    <div className="p-4 flex gap-2 pt-3">
+                    <div className="p-4 grid grid-cols-2 gap-2 pt-3">
                       <button
                         onClick={() => handleEditCategory(category)}
-                        className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
+                        className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
                       >
                         Edit
                       </button>
                       <button
                         onClick={() => handleDeleteCategory(Number(category.categoryId))}
-                        className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
+                        className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50 w-full"
                       >
                         Delete
                       </button>
@@ -249,7 +250,7 @@ const CategoryPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+            <div className="bg-gray-50 px-6 py-4 flex flex-col gap-3 border-t border-gray-200">
               <button
                 onClick={resetModal}
                 className="flex-1 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 font-medium"

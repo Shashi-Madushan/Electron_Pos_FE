@@ -162,13 +162,14 @@ const Brands: React.FC = () => {
                   <tr>
                     <th className="p-4 text-left font-semibold">ID</th>
                     <th className="p-4 text-left font-semibold">Brand Name</th>
-                    <th className="p-4 text-left font-semibold">Actions</th>
+                    <th className="p-4 text-left font-semibold">Edit</th>
+                    <th className="p-4 text-left font-semibold">Delete</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredBrands.length === 0 ? (
                     <tr>
-                      <td colSpan={3} className="text-center py-12 text-gray-500 text-lg">
+                      <td colSpan={4} className="text-center py-12 text-gray-500 text-lg">
                         No brands found.
                       </td>
                     </tr>
@@ -187,23 +188,23 @@ const Brands: React.FC = () => {
                           </span>
                         </td>
                         <td className="p-4">
-                          <div className="flex gap-2">
-                            <button
-                              className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                              onClick={() => {
-                                setModalBrand({ ...brand });
-                                setModalOpen(true);
-                              }}
-                            >
-                              Edit
-                            </button>
-                            <button
-                              className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                              onClick={() => setDeleteId(brand.brandId)}
-                            >
-                              Delete
-                            </button>
-                          </div>
+                          <button
+                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
+                            onClick={() => {
+                              setModalBrand({ ...brand });
+                              setModalOpen(true);
+                            }}
+                          >
+                            Edit
+                          </button>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50 w-full"
+                            onClick={() => setDeleteId(brand.brandId)}
+                          >
+                            Delete
+                          </button>
                         </td>
                       </tr>
                     ))
@@ -254,7 +255,7 @@ const Brands: React.FC = () => {
                   />
                 </div>
               </div>
-              <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+              <div className="bg-gray-50 px-6 py-4 flex flex-col gap-3 border-t border-gray-200">
                 <button
                   type="button"
                   onClick={closeModal}
@@ -285,7 +286,7 @@ const Brands: React.FC = () => {
             </div>
             <div className="p-6">
               <p className="text-black mb-4">Are you sure you want to delete this brand?</p>
-              <div className="flex gap-3">
+              <div className="flex flex-col gap-3">
                 <button
                   className="flex-1 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 font-medium"
                   onClick={cancelDelete}
