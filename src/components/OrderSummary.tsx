@@ -26,16 +26,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
 
   const originalTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
-    return sum + (product?.salePrice || 0) * item.qty;
+    const originalPrice = product?.salePrice || 0;
+    return sum + originalPrice * item.qty;
   }, 0);
 
   const discountTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
-    return sum + ((product?.salePrice || 0) - item.price) * item.qty;
+    const originalPrice = product?.salePrice || 0;
+    const discountAmount = originalPrice * (item.discount / 100);
+    return sum + discountAmount * item.qty;
   }, 0);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const totalDiscount = Math.min(orderDiscount, subtotal);
+  const subtotal = originalTotal - discountTotal;
+  const totalDiscount = Math.min(subtotal, subtotal * (orderDiscount / 100));
   const total = subtotal - totalDiscount;
 
   const formatLKR = (amount: number) => {
@@ -94,7 +97,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
                           formatLKR(item.price)
                         )}
                         {item.discount > 0 && (
-                          <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
+                          <span className="text-red-500 text-sm ml-2">(-{item.discount})</span>
                         )}
                       </p>
                     </div>
@@ -142,13 +145,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <span className="font-medium">{formatLKR(subtotal)}</span>
           </div>
           <div className="flex items-center justify-between mb-2">
-            <span className="text-gray-600">Order Discount (LKR)</span>
+            <span className="text-gray-600">Order Discount (%)</span>
             <input
               type="number"
               min="0"
-              max={subtotal}
+              max={100}
               value={orderDiscount}
-              onChange={(e) => setOrderDiscount(Math.min(subtotal, Math.max(0, Number(e.target.value))))}
+              onChange={(e) => setOrderDiscount(Math.min(100, Math.max(0, Number(e.target.value))))}
               className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
             />
           </div>
