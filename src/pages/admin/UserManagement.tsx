@@ -3,7 +3,6 @@ import {
   registerUser, 
   getAllUsersAdmin, 
   updateUserAdmin, 
-  deleteUserAdmin,
 } from '../../services/UserService';
 import { toast } from 'react-toastify';
 
@@ -20,8 +19,6 @@ const UserManagement: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     userName: '',
     email: '',
@@ -97,32 +94,22 @@ const UserManagement: React.FC = () => {
     }
   };
 
-  const handleDeleteClick = (userId: string) => {
-    setUserToDelete(userId);
-    setShowDeleteConfirm(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!userToDelete) return;
-    try {
-      await deleteUserAdmin(Number(userToDelete));
-      setShowDeleteConfirm(false);
-      setUserToDelete(null);
-      loadUsers();
-    } catch (error) {
-      console.error('Error deleting user:', error);
-    }
-  };
-
   const handleToggleStatus = async (user: User) => {
     try {
+      const newStatus = !user.isActive;
+      // send explicit fields and set password to null when updating status
       await updateUserAdmin(Number(user.userId), {
-        ...user,
-        isActive: !user.isActive
+        userName: user.userName,
+        email: user.email,
+        role: user.role,
+        isActive: newStatus,
+        password: null
       });
       loadUsers();
+      toast.success(`${user.userName} has been ${newStatus ? 'activated' : 'deactivated'}`);
     } catch (error) {
       console.error('Error toggling user status:', error);
+      toast.error('Failed to update user status');
     }
   };
 
@@ -163,120 +150,106 @@ const UserManagement: React.FC = () => {
   }
 
   return (
-    <div className="p-4">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-2xl font-bold">User Management</h1>
-        <button 
-          onClick={handleAddUser}
-          className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-        >
-          Add New User
-        </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow">
-        <table className="min-w-full">
-          <thead>
-            <tr className="bg-gray-50">
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Name
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Email
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Role
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Status
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {users.length > 0 ? (
-              users.map((user: User) => (
-                <tr key={user.userId}>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.userName}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.email}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">{user.role}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <button
-                      onClick={() => handleToggleStatus(user)}
-                      className={`px-2 py-1 rounded-full text-xs ${
-                        user.isActive 
-                          ? 'bg-green-100 text-green-800 hover:bg-green-200' 
-                          : 'bg-red-100 text-red-800 hover:bg-red-200'
-                      }`}
-                    >
-                      {user.isActive ? 'Active' : 'Inactive'}
-                    </button>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEditUser(user)}
-                        className="bg-blue-100 text-blue-700 px-3 py-1 rounded hover:bg-blue-200 transition-colors duration-150"
-                      >
-                        Edit
-                      </button>
-                      <button
-                        onClick={() => handleDeleteClick(user.userId.toString())}
-                        className="bg-red-100 text-red-700 px-3 py-1 rounded hover:bg-red-200 transition-colors duration-150"
-                      >
-                        Delete
-                      </button>
-                      <button
-                        onClick={() => {
-                          setPasswordUser(user);
-                          setNewPassword('');
-                          setConfirmPassword('');
-                          setShowPasswordModal(true);
-                        }}
-                        className="bg-green-100 text-green-700 px-3 py-1 rounded hover:bg-green-200 transition-colors duration-150"
-                      >
-                        Change Password
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={5} className="px-6 py-4 text-center">
-                  No users found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-20">
-          <div className="bg-white/90 p-6 rounded-lg w-96 shadow-xl backdrop-blur-md">
-            <h2 className="text-xl font-bold mb-4">Confirm Delete</h2>
-            <p className="mb-4">Are you sure you want to delete this user?</p>
-            <div className="flex justify-end gap-2">
-              <button
-                onClick={() => setShowDeleteConfirm(false)}
-                className="px-4 py-2 border rounded"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleDeleteConfirm}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-              >
-                Delete
-              </button>
-            </div>
+    <div className="min-h-screen bg-white p-4 md:p-8">
+      <div className="max-w-8xl mx-auto">
+        {/* Header / Controls */}
+        <div className="bg-white shadow-sm rounded-lg p-6 mb-6 border border-gray-200 flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-semibold text-black">User Management</h1>
+            <p className="text-sm text-gray-500 mt-1">Manage application users and their status</p>
+          </div>
+          <div>
+            <button
+              onClick={handleAddUser}
+              className="bg-white text-blue-700 border border-blue-600 shadow-lg px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-150"
+              style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+            >
+              Add New User
+            </button>
           </div>
         </div>
-      )}
+
+        {/* Table Card */}
+        <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
+                <tr>
+                  <th className="p-4 text-left font-semibold">Name</th>
+                  <th className="p-4 text-left font-semibold">Email</th>
+                  <th className="p-4 text-left font-semibold">Role</th>
+                  <th className="p-4 text-left font-semibold">Status</th>
+                  <th className="p-4 text-left font-semibold">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.length > 0 ? (
+                  users.map((user: User, index) => (
+                    <tr
+                      key={user.userId}
+                      className={`border-b border-gray-100 hover:bg-blue-50 transition-all duration-150 ${
+                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                      }`}
+                    >
+                      <td className="p-4 text-black font-medium">{user.userName}</td>
+                      <td className="p-4 text-black">{user.email}</td>
+                      <td className="p-4 text-black">{user.role}</td>
+                      <td className="p-4">
+                        <span
+                          className={`px-2 py-1 rounded-full text-xs ${
+                            user.isActive ? 'bg-blue-100 text-blue-800' : 'bg-red-100 text-red-800'
+                          }`}
+                        >
+                          {user.isActive ? 'Active' : 'Inactive'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEditUser(user)}
+                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
+                          >
+                            Edit
+                          </button>
+
+                          <button
+                            onClick={() => handleToggleStatus(user)}
+                            className={`px-3 py-1 text-sm font-medium rounded w-full ${
+                              user.isActive
+                                ? 'text-red-600 border border-red-100 hover:bg-red-50'
+                                : 'text-blue-700 border border-blue-100 hover:bg-blue-50'
+                            }`}
+                          >
+                            {user.isActive ? 'Deactivate' : 'Activate'}
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setPasswordUser(user);
+                              setNewPassword('');
+                              setConfirmPassword('');
+                              setShowPasswordModal(true);
+                            }}
+                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
+                          >
+                            Change Password
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan={5} className="p-8 text-center text-gray-500">
+                      No users found
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-20">
