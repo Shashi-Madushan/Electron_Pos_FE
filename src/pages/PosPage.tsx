@@ -185,7 +185,17 @@ const PosPage = () => {
     };
   };
 
-  // Updated handleCheckout function with detailed logging
+  // Helper function to refresh products
+  const refreshProducts = async () => {
+    try {
+      const productsData = await getActiveProducts();
+      setProducts(productsData.productDTOList);
+    } catch (error) {
+      console.error('Error refreshing products:', error);
+    }
+  };
+
+  // Updated handleCheckout function with product refresh
   const handleCheckout = async () => {
     const saleDTO = prepareSaleDTO();
     console.log('Prepared SaleDTO:', saleDTO);
@@ -208,6 +218,7 @@ const PosPage = () => {
         setSaleData(newSaleData);
         setShowReceipt(true);
         setOrderItems([]); // Clear the order items
+        await refreshProducts(); // Refresh products after checkout
       }
     } catch (error) {
       console.error('Error during checkout:', error);
