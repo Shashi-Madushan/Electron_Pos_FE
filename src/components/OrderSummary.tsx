@@ -41,7 +41,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   const discountTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
     const originalPrice = product?.salePrice || 0;
-    const discountAmount = originalPrice * (item.discount / 100);
+    const discountAmount = originalPrice - (originalPrice - item.discount);
     return sum + discountAmount * item.qty;
   }, 0);
 

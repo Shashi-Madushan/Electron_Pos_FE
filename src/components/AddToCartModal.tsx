@@ -314,7 +314,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
           <button
             onClick={() => {
               console.log('Add to Cart:', { product, quantity: quantity === '' ? 1 : quantity, totalDiscount });
-              onAdd(product, quantity === '' ? 1 : quantity, totalDiscount);
+              onAdd(product, quantity === '' ? 1 : quantity, perItemDiscount);
             }}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             disabled={product.qty === 0}
