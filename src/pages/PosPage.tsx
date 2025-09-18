@@ -235,6 +235,17 @@ const PosPage = () => {
     }, 100);
   };
 
+  // Listen for Escape key to close barcode scanner modal
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isBarcodeModalOpen) {
+        setIsBarcodeModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isBarcodeModalOpen]);
+
   return (
     <div className="h-screen bg-gradient-to-br from-gray-50 to-white flex gap-4 p-4 overflow-hidden">
       {!showReceipt ? (
