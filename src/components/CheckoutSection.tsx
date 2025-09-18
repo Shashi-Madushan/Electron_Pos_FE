@@ -41,14 +41,18 @@ const CheckoutSection: React.FC<CheckoutSectionProps> = ({
 }) => {
   return (
     <div className="w-96 h-full flex flex-col">
-      <OrderSummary
-        items={orderItems}
-        products={products}
-        onUpdateQuantity={onUpdateQuantity}
-        onRemoveItem={onRemoveItem}
-        onOrderTotalsChange={onOrderTotalsChange}
-      />
-      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200">
+      {/* Make OrderSummary scrollable and take available space */}
+      <div className="flex-1 min-h-0 overflow-y-auto">
+        <OrderSummary
+          items={orderItems}
+          products={products}
+          onUpdateQuantity={onUpdateQuantity}
+          onRemoveItem={onRemoveItem}
+          onOrderTotalsChange={onOrderTotalsChange}
+        />
+      </div>
+      {/* Checkout/payment section always visible at bottom */}
+      <div className="mt-4 p-4 bg-white rounded-lg border border-gray-200 sticky bottom-0 z-10">
         <div className="mb-2">
           <label className="block text-sm font-medium mb-1">Payment Method</label>
           <select
