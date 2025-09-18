@@ -29,11 +29,11 @@ const styles = `
 
 /***** ITEMS *****/
 .items { margin-top: 8px; }
-.items-head, .item-row { display: grid; grid-template-columns: 1fr 36px 68px; align-items: start; gap: 6px; }
+.items-head, .item-row { display: grid; grid-template-columns: 1fr 85px; align-items: start; gap: 6px; }
 .items-head { font-weight: 600; font-size: 11px; }
 .item-row { font-size: 11px; }
 .item-name { word-break: break-word; }
-.right { text-align: right; }
+.right { text-align: right !important; justify-self: end; }
 
 /***** TOTALS *****/
 .totals { font-size: 11px; }
@@ -97,11 +97,11 @@ export const formatMoney = (value: number, currency: Currency = "LKR"): string =
 };
 
 export interface ReceiptProps {
-    business: BusinessInfo;
-    sale: Sale;
-    currency?: Currency;
-    autoPrint?: boolean; // Add this prop
-    onPrintComplete?: () => void; // Add this prop
+  business: BusinessInfo;
+  sale: Sale;
+  currency?: Currency;
+  autoPrint?: boolean; // Add this prop
+  onPrintComplete?: () => void; // Add this prop
 }
 
 export default function Receipt(props: ReceiptProps) {
@@ -170,7 +170,7 @@ export default function Receipt(props: ReceiptProps) {
         const receiptElement = document.querySelector('.receipt') as HTMLElement;
         if (!receiptElement) return;
 
-        const canvas = await html2canvas(receiptElement, { 
+        const canvas = await html2canvas(receiptElement, {
           scale: 2,
           backgroundColor: '#ffffff' // force pure white background
         });
@@ -190,7 +190,7 @@ export default function Receipt(props: ReceiptProps) {
         pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
         // tell PDF to auto-print
-        (pdf as any).autoPrint();
+        //(pdf as any).autoPrint();
 
         // make a Blob URL
         const pdfBlob = pdf.output('bloburl').toString();
@@ -201,10 +201,16 @@ export default function Receipt(props: ReceiptProps) {
         iframe.src = pdfBlob;
         document.body.appendChild(iframe);
 
-        // wait until loaded, then print and remove
+        // ...existing code...
         iframe.onload = () => {
+          const removeIframe = () => {
+            iframe.parentNode?.removeChild(iframe);
+            iframe.contentWindow?.removeEventListener('afterprint', removeIframe);
+          };
+          iframe.contentWindow?.addEventListener('afterprint', removeIframe);
           iframe.contentWindow?.print();
         };
+        // ...existing code...
       }
 
       const timer = setTimeout(printPDF, 1000);
@@ -247,29 +253,29 @@ export default function Receipt(props: ReceiptProps) {
         <div className="items">
           <div className="items-head mono">
             <div>Item</div>
-            <div className="right">Qty</div>
+            {/* <div className="right">Qty</div> */}
             <div className="right">Total</div>
           </div>
           <div className="sep" />
-            {sale.saleItems.map((it) => {
+          {sale.saleItems.map((it) => {
             const product = products[it.productId]; // fetched product
             const base = it.qty * it.price; // qty * price
             const discount = it.discount ?? 0;
 
             return (
-                <div className="item-row mono" key={it.saleItemId}>
+              <div className="item-row mono" key={it.saleItemId}>
                 <div className="item-name">
-                    <div>{product?.productName || `Product ${it.productId}`}</div>
-                    <div style={{ color: "#6b7280", fontSize: 10 }}>
+                  <div>{product?.productName || `Product ${it.productId}`}</div>
+                  <div style={{ color: "#6b7280", fontSize: 10 }}>
                     {formatMoney(it.price, currency)} × {it.qty}
                     {discount > 0 && <> · Disc: {formatMoney(discount, currency)}</>}
-                    </div>
+                  </div>
                 </div>
-                <div className="right">{it.qty}</div>
+                {/* <div className="right">{it.qty}</div> */}
                 <div className="right">{formatMoney(base, currency)}</div>
-                </div>
+              </div>
             );
-            })}
+          })}
 
         </div>
 
