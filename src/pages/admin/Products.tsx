@@ -574,9 +574,13 @@ const Products: React.FC = () => {
                         </div>
                         <div className="p-6 flex flex-col items-center justify-center">
                             {selectedProductForBarcode.barcode ? (
-                                <div ref={barcodeRef} className="bg-white p-4 inline-block text-center">
+                                <div ref={barcodeRef} className="bg-white p-8 inline-block text-center">
+                                     {/* Shop Name */}
+                                    <div className="text-black font-bold text-3xl mb-1">
+                                        N .I テンポ japan shop
+                                    </div>
                                     <Barcode value={selectedProductForBarcode.barcode} />
-                                    <div className="text-black font-semibold mt-1">
+                                    <div className="text-black font-bold text-2xl mt-1">
                                         LKR {selectedProductForBarcode.salePrice.toFixed(2)}
                                     </div>
                                 </div>

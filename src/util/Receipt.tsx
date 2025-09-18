@@ -164,36 +164,53 @@ export default function Receipt(props: ReceiptProps) {
     }).format(d);
   }, [date]);
 
-    useEffect(() => {
-      if (autoPrint) {
-        async function printPDF() {
-          const receiptElement = document.getElementById('receipt-root');
-          if (!receiptElement) return;
+  useEffect(() => {
+    if (autoPrint) {
+      async function printPDF() {
+        const receiptElement = document.querySelector('.receipt') as HTMLElement;
+        if (!receiptElement) return;
 
-          const canvas = await html2canvas(receiptElement, { scale: 2 });
-          const imgData = canvas.toDataURL('image/png');
+        const canvas = await html2canvas(receiptElement, { 
+          scale: 2,
+          backgroundColor: '#ffffff' // force pure white background
+        });
+        const imgData = canvas.toDataURL('image/png');
 
-          const pdfWidth = 78; // mm
-          const pdfHeight = canvas.height * pdfWidth / canvas.width;
-          const pdf = new jsPDF({
-            unit: 'mm',
-            format: [pdfWidth, pdfHeight]
-          });
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const pdfWidth = 78; // mm
+        const pdfHeight = canvas.height * pdfWidth / canvas.width;
+        const pdf = new jsPDF({
+          unit: 'mm',
+          format: [pdfWidth, pdfHeight]
+        });
 
-          const pdfBlob = pdf.output('blob');
-          const pdfUrl = URL.createObjectURL(pdfBlob);
+        pdf.setDrawColor(200, 200, 200);  // light gray border
+        pdf.setLineWidth(0.2);
+        pdf.rect(0.5, 0.5, pdfWidth - 1, pdfHeight - 1);
 
-          const printWindow = window.open(pdfUrl);
-          if (printWindow) printWindow.print();
-        }
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
-        const timer = setTimeout(printPDF, 1000);
-        return () => clearTimeout(timer);
+        // tell PDF to auto-print
+        (pdf as any).autoPrint();
+
+        // make a Blob URL
+        const pdfBlob = pdf.output('bloburl').toString();
+
+        // create hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = pdfBlob;
+        document.body.appendChild(iframe);
+
+        // wait until loaded, then print and remove
+        iframe.onload = () => {
+          iframe.contentWindow?.print();
+        };
       }
-    }, [autoPrint]);
 
-
+      const timer = setTimeout(printPDF, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [autoPrint]);
 
   return (
     <div id="receipt-root" className="receipt-root">
