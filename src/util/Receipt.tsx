@@ -7,9 +7,12 @@ import { getProductById } from "../services/ProductService";
 import type { Product } from "../types/Product";
 import type { BusinessInfo, Currency, Sale } from "../types/Sale";
 
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+
 const styles = `
 /* Center on screen */
-.receipt-root { display: flex; justify-content: center; padding: 16px; background: #f3f4f6; min-height: 100vh; }
+.receipt-root { display: flex; justify-content: center; padding: 16px; background: #f3f4f6; min-height: 50vh; }
 
 /***** RECEIPT *****/
 .receipt { width: 80mm; background: white; color: #111827; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
@@ -42,13 +45,41 @@ const styles = `
 
 /***** PRINTING *****/
 @media print {
-  body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  .no-print { display: none !important; }
-  .receipt-root { background: white; padding: 0; }
-  .receipt { width: 80mm; box-shadow: none; padding: 10px; }
+  // body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  // .no-print { display: none !important; }
+  // .receipt-root { background: white; padding: 0; }
+  // .receipt { width: 78mm; box-shadow: none; padding: 10px; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: white;
+    width: 72mm;             /* force print width */
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .receipt-root {
+    background: white !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .receipt {
+    width: 72mm !important;   /* force receipt width */
+    box-shadow: none !important;
+    page-break-inside: avoid;
+  }
+
+  .item-row {
+    page-break-inside: avoid; /* prevent splitting items */
+  }
+
+  .no-print {
+    display: none !important;
+  }
 }
 
-@page { size: 80mm auto; margin: 0; }
+@page { size: 78mm auto; margin: 0; }
 `;
 
 export const formatMoney = (value: number, currency: Currency = "LKR"): string => {
@@ -65,49 +96,10 @@ export const formatMoney = (value: number, currency: Currency = "LKR"): string =
   }
 };
 
-export function useTotals(props: ReceiptProps) {
-  const { sale, taxPct = 0 } = props;
-  const items = sale.saleItems;
-
-  return useMemo(() => {
-    // Per-item calculations
-    const lines = items.map((it) => {
-      const lineBase = it.qty * it.price;   // qty × price
-      const discount = Math.min(lineBase, it.discount ?? 0); // flat discount
-      const net = lineBase - discount;
-      return { id: it.saleItemId, base: lineBase, discount, net };
-    });
-
-    // Subtotal before overall discounts
-    const subTotal = lines.reduce((sum, l) => sum + l.net, 0);
-
-    // Sale-level discount (from Sale.totalDiscount)
-    const discountOverall = Math.min(sale.totalDiscount ?? 0, subTotal);
-
-    // After discount
-    const afterDiscount = subTotal - discountOverall;
-
-    // Tax
-    const tax = (afterDiscount * Math.max(0, taxPct)) / 100;
-
-    // Grand total
-    const grandTotal = afterDiscount + tax;
-
-    return {
-      lines,
-      subTotal,
-      discountOverall,
-      tax,
-      grandTotal,
-    };
-  }, [items, sale.totalDiscount, taxPct]);
-};
-
 export interface ReceiptProps {
     business: BusinessInfo;
     sale: Sale;
     currency?: Currency;
-    taxPct?: number;
     autoPrint?: boolean; // Add this prop
     onPrintComplete?: () => void; // Add this prop
 }
@@ -117,7 +109,6 @@ export default function Receipt(props: ReceiptProps) {
     business,
     sale,
     currency = "LKR",
-    taxPct = 0,
     autoPrint = false,
     onPrintComplete
   } = props;
@@ -157,11 +148,10 @@ export default function Receipt(props: ReceiptProps) {
     };
 
     loadData();
+    console.log("Sale Data:", sale);
   }, []);
 
   const date = sale.date || new Date();
-
-  const totals = useTotals(props);
 
   const dateStr = useMemo(() => {
     const d = typeof date === "string" ? new Date(date) : date;
@@ -176,17 +166,54 @@ export default function Receipt(props: ReceiptProps) {
 
   useEffect(() => {
     if (autoPrint) {
-      // Wait for data to load
-      const timer = setTimeout(() => {
-        window.print();
-        onPrintComplete?.();
-      }, 1000);
+      async function printPDF() {
+        const receiptElement = document.querySelector('.receipt') as HTMLElement;
+        if (!receiptElement) return;
+
+        const canvas = await html2canvas(receiptElement, { 
+          scale: 2,
+          backgroundColor: '#ffffff' // force pure white background
+        });
+        const imgData = canvas.toDataURL('image/png');
+
+        const pdfWidth = 78; // mm
+        const pdfHeight = canvas.height * pdfWidth / canvas.width;
+        const pdf = new jsPDF({
+          unit: 'mm',
+          format: [pdfWidth, pdfHeight]
+        });
+
+        pdf.setDrawColor(200, 200, 200);  // light gray border
+        pdf.setLineWidth(0.2);
+        pdf.rect(0.5, 0.5, pdfWidth - 1, pdfHeight - 1);
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+
+        // tell PDF to auto-print
+        (pdf as any).autoPrint();
+
+        // make a Blob URL
+        const pdfBlob = pdf.output('bloburl').toString();
+
+        // create hidden iframe for printing
+        const iframe = document.createElement('iframe');
+        iframe.style.display = 'none';
+        iframe.src = pdfBlob;
+        document.body.appendChild(iframe);
+
+        // wait until loaded, then print and remove
+        iframe.onload = () => {
+          iframe.contentWindow?.print();
+        };
+      }
+
+      const timer = setTimeout(printPDF, 1000);
       return () => clearTimeout(timer);
     }
-  }, [autoPrint, onPrintComplete]);
+  }, [autoPrint]);
 
   return (
-    <div className="receipt-root">
+    <div id="receipt-root" className="receipt-root">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
 
       <div className="receipt" role="document" aria-label="Sales receipt 80mm">
@@ -228,7 +255,6 @@ export default function Receipt(props: ReceiptProps) {
             const product = products[it.productId]; // fetched product
             const base = it.qty * it.price; // qty * price
             const discount = it.discount ?? 0;
-            const net = base - discount;
 
             return (
                 <div className="item-row mono" key={it.saleItemId}>
@@ -240,7 +266,7 @@ export default function Receipt(props: ReceiptProps) {
                     </div>
                 </div>
                 <div className="right">{it.qty}</div>
-                <div className="right">{formatMoney(net, currency)}</div>
+                <div className="right">{formatMoney(base, currency)}</div>
                 </div>
             );
             })}
@@ -251,17 +277,19 @@ export default function Receipt(props: ReceiptProps) {
 
         {/* Totals */}
         <div className="totals mono">
-          <div className="row"><span>Sub Total</span><span>{formatMoney(totals.subTotal, currency)}</span></div>
-          {sale.totalDiscount > 0 && (
-            <div className="row"><span>Discount</span><span>-{formatMoney(totals.discountOverall, currency)}</span></div>
+          <div className="row"><span>Orginal Total</span><span>{formatMoney(sale.originalTotal, currency)}</span></div>
+          <div className="row"><span>Item Discounts</span><span>-{formatMoney(sale.itemDiscounts, currency)}</span></div>
+          <div className="row"><span>Sub Total</span><span>{formatMoney(sale.subtotal, currency)}</span></div>
+          {sale.orderDiscountPercentage > 0 && (
+            <>
+              <div className="row"><span>Order Discount(%)</span><span>{sale.orderDiscountPercentage} %</span></div>
+              <div className="row"><span>Order Discount</span><span>-{formatMoney(sale.orderDiscount, currency)}</span></div>
+            </>
           )}
-          {taxPct > 0 && (
-            <div className="row"><span>Tax ({taxPct}%)</span><span>{formatMoney(totals.tax, currency)}</span></div>
-          )}
-          <div className="row bold"><span>Grand Total</span><span>{formatMoney(totals.grandTotal, currency)}</span></div>
+          <div className="row bold"><span>Grand Total</span><span>{formatMoney(sale.totalAmount, currency)}</span></div>
         </div>
 
-        <div className="footer">ご購入ありがとうございました！<br />Thank you for your purchase!</div>
+        <div className="footer"><strong>ご購入ありがとうございました！</strong><br />Thank you for your purchase!</div>
 
         {/* Optional QR/Barcode slot (image source can be injected by parent) */}
         {/* <div className="qr"><img src={qrSrc} alt="QR" width={120} height={120} /></div> */}

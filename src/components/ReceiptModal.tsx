@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import Receipt from '../util/Receipt';
 import type { Sale } from '../types/Sale';
 
@@ -12,10 +12,18 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
     if (!isOpen) return null;
 
     const businessInfo = {
-    name: "N I テンポ japan shop",
-    address: "573/E1/1 colombo road, gonapola",
-    phone: "+94 71 1602 253",
-  };
+        name: "N I テンポ japan shop",
+        address: "573/E1/1 colombo road, gonapola",
+        phone: "+94 71 1602 253",
+    };
+
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            onClose();
+        }, 1000);
+
+        return () => clearTimeout(timer); // cleanup
+    }, [onClose]);
 
     return (
         <div style={{
@@ -34,7 +42,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
         }}>
             <div style={{ 
                 backgroundColor: 'white',
-                width: '75mm',  // Standard thermal paper width
+                width: '72mm',  // Standard thermal paper width
                 margin: '0 auto',
                 overflow: 'visible'
             }}>
