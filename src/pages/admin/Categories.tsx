@@ -3,7 +3,7 @@ import {
   getAllCategories,
   saveCategory,
   updateCategory,
-  deleteCategory,
+  // deleteCategory,
   
 } from '../../services/CategoryService';
 import type { Category } from '../../services/CategoryService';
@@ -54,13 +54,13 @@ const CategoryPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCategory = async (categoryId?: number) => {
-    if (!categoryId) return;
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      await deleteCategory(categoryId);
-      fetchCategories();
-    }
-  };
+  // const handleDeleteCategory = async (categoryId?: number) => {
+  //   if (!categoryId) return;
+  //   if (window.confirm('Are you sure you want to delete this category?')) {
+  //     await deleteCategory(categoryId);
+  //     fetchCategories();
+  //   }
+  // };
 
   const resetModal = () => {
     setNewCategory({ name: '' });

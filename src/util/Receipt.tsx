@@ -110,7 +110,7 @@ export default function Receipt(props: ReceiptProps) {
     sale,
     currency = "LKR",
     autoPrint = false,
-    onPrintComplete
+    // onPrintComplete
   } = props;
 
   const [user, setUser] = useState<User | null>(null);

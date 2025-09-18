@@ -23,7 +23,6 @@ import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
 import { SystemSettings } from "./pages/admin/SystemSettings";
 import { UserSettings } from "./pages/UserSetting";
-import { ReceiptDemoPage } from "./util/ReceiptDemoPage";
 
 // Root redirect based on authentication status
 const RootRedirect = () => {
@@ -50,10 +49,7 @@ const router = createHashRouter([
     path: "/",
     element: <RootRedirect />
   },
-  {
-    path: "/bill",
-    element: <ReceiptDemoPage />
-  },
+  
 
   // USER-PROTECTED ROUTES (Cashier / Regular User)
   {
