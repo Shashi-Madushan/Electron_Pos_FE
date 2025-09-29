@@ -3,7 +3,7 @@ import {
   getAllCategories,
   saveCategory,
   updateCategory,
-  deleteCategory,
+  // deleteCategory,
   
 } from '../../services/CategoryService';
 import type { Category } from '../../services/CategoryService';
@@ -14,7 +14,6 @@ const CategoryPage: React.FC = () => {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [newCategory, setNewCategory] = useState<Omit<Category, 'categoryId'>>({ name: '' });
 
   const fetchCategories = async () => {
@@ -55,13 +54,13 @@ const CategoryPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const handleDeleteCategory = async (categoryId?: number) => {
-    if (!categoryId) return;
-    if (window.confirm('Are you sure you want to delete this category?')) {
-      await deleteCategory(categoryId);
-      fetchCategories();
-    }
-  };
+  // const handleDeleteCategory = async (categoryId?: number) => {
+  //   if (!categoryId) return;
+  //   if (window.confirm('Are you sure you want to delete this category?')) {
+  //     await deleteCategory(categoryId);
+  //     fetchCategories();
+  //   }
+  // };
 
   const resetModal = () => {
     setNewCategory({ name: '' });
@@ -98,121 +97,56 @@ const CategoryPage: React.FC = () => {
                 <option value="asc">Name A-Z</option>
                 <option value="desc">Name Z-A</option>
               </select>
-              {/* View Toggle */}
-              <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
-                <button
-                  onClick={() => setViewMode('table')}
-                  className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                    viewMode === 'table'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-black hover:bg-gray-200'
-                  }`}
-                >
-                  Table
-                </button>
-                <button
-                  onClick={() => setViewMode('cards')}
-                  className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                    viewMode === 'cards'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-black hover:bg-gray-200'
-                  }`}
-                >
-                  Cards
-                </button>
-              </div>
             </div>
           </div>
         </div>
 
         {/* Content Section */}
         <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-          {viewMode === 'table' ? (
-            <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
-              <table className="w-full">
-                <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
-                  <tr>
-                    <th className="p-4 text-left font-semibold">Category Name</th>
-                    <th className="p-4 text-left font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredAndSortedCategories.map((category, index) => (
-                    <tr
-                      key={category.categoryId}
-                      className={`border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 ${
-                        index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                      }`}
-                    >
-                      <td className="p-4 text-black font-medium">{category.name}</td>
-                      <td className="p-4">
-                        <div className="flex gap-2">
-                          <button
-                            onClick={() => handleEditCategory(category)}
-                            className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
-                          >
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteCategory(Number(category.categoryId))}
-                            className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
-                          >
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              {filteredAndSortedCategories.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No categories found matching your search</p>
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                {filteredAndSortedCategories.map((category) => (
-                  <div
+          <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
+            <table className="w-full">
+              <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
+                <tr>
+                  <th className="p-4 text-left font-semibold">Category Name</th>
+                  <th className="p-4 text-left font-semibold">Edit</th>
+                  {/* <th className="p-4 text-left font-semibold">Delete</th> */}
+                </tr>
+              </thead>
+              <tbody>
+                {filteredAndSortedCategories.map((category, index) => (
+                  <tr
                     key={category.categoryId}
-                    className="bg-white rounded border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200"
+                    className={`border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 ${
+                      index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                    }`}
                   >
-                    <div className="bg-blue-500 p-4 text-white rounded-t">
-                      <div className="flex items-center gap-3">
-                        <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold">
-                          {category.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <h3 className="font-bold text-lg">{category.name}</h3>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="p-4 flex gap-2 pt-3">
+                    <td className="p-4 text-black font-medium">{category.name}</td>
+                    <td className="p-4">
                       <button
                         onClick={() => handleEditCategory(category)}
-                        className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50"
+                        className="text-blue-600 px-3 py-1 text-sm font-medium border border-blue-100 rounded hover:bg-blue-50 w-full"
                       >
                         Edit
                       </button>
+                    </td>
+                    {/* <td className="p-4">
                       <button
                         onClick={() => handleDeleteCategory(Number(category.categoryId))}
-                        className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50"
+                        className="text-red-600 px-3 py-1 text-sm font-medium border border-red-100 rounded hover:bg-red-50 w-full"
                       >
                         Delete
                       </button>
-                    </div>
-                  </div>
+                    </td> */}
+                  </tr>
                 ))}
+              </tbody>
+            </table>
+            {filteredAndSortedCategories.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-lg">No categories found matching your search</p>
               </div>
-              {filteredAndSortedCategories.length === 0 && (
-                <div className="text-center py-12">
-                  <p className="text-gray-500 text-lg">No categories found matching your search</p>
-                </div>
-              )}
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
 
@@ -249,7 +183,7 @@ const CategoryPage: React.FC = () => {
                 />
               </div>
             </div>
-            <div className="bg-gray-50 px-6 py-4 flex gap-3 border-t border-gray-200">
+            <div className="bg-gray-50 px-6 py-4 flex flex-col gap-3 border-t border-gray-200">
               <button
                 onClick={resetModal}
                 className="flex-1 bg-white text-black border border-gray-300 py-2 rounded hover:bg-gray-100 font-medium"

@@ -21,6 +21,11 @@ export const mapSaleDTOToSale = (dto: SaleDTO): Sale => {
         paymentMethod: dto.paymentMethod,
         userId: dto.userId,
         customerId: dto.customerId || 0,
-        saleItems: dto.saleItems ? dto.saleItems.map(mapSaleItemDTOToSaleItem) : [] // Add null check here
+        saleItems: dto.saleItems ? dto.saleItems.map(mapSaleItemDTOToSaleItem) : [],// Add null check here
+        originalTotal: dto.originalTotal,
+        itemDiscounts: dto.itemDiscounts,
+        subtotal: dto.subtotal,
+        orderDiscountPercentage: dto.orderDiscountPercentage,
+        orderDiscount: dto.orderDiscount
     };
 };

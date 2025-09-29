@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { getAllSales, deleteSale } from '../../services/SaleService';
+import {
+  getAllSales,
+  getSalesToday,
+  getSalesLastWeek,
+  getSalesLastMonth,
+  getSalesCustomRange,
+  deleteSale
+} from '../../services/SaleService';
 import { getAllSaleItemsBySaleId } from '../../services/SaleItemService';
 
 interface Sale {
@@ -34,18 +41,45 @@ const AdminSalesPage: React.FC = () => {
   const [saleItems, setSaleItems] = useState<SaleItem[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
   const [itemsError, setItemsError] = useState<string | null>(null);
+  const [rangeType, setRangeType] = useState<'all' | 'today' | 'lastweek' | 'lastmonth' | 'custom'>('today');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
 
   useEffect(() => {
     fetchSalesData();
-  }, []);
+    // eslint-disable-next-line
+  }, [rangeType, customStart, customEnd]);
 
   const fetchSalesData = async () => {
     setLoading(true);
     try {
-      const response = await getAllSales();
+      let response;
+      switch (rangeType) {
+        case 'today':
+          response = await getSalesToday();
+          break;
+        case 'lastweek':
+          response = await getSalesLastWeek();
+          break;
+        case 'lastmonth':
+          response = await getSalesLastMonth();
+          break;
+        case 'custom':
+          if (customStart && customEnd) {
+            response = await getSalesCustomRange(customStart, customEnd);
+          } else {
+            setSales([]);
+            setLoading(false);
+            return;
+          }
+          break;
+        default:
+          response = await getAllSales();
+      }
       setSales(response.saleDTOList || []);
     } catch (error) {
       console.error('Error fetching sales:', error);
+      setSales([]);
     }
     setLoading(false);
   };
@@ -94,8 +128,61 @@ const AdminSalesPage: React.FC = () => {
 
   return (
     <div className="p-4">
-      <div className="flex justify-between items-center mb-6">
+      <div className="flex flex-col md:flex-row justify-between items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold">Sales Management</h1>
+        <div className="flex flex-wrap gap-2 items-center">
+          <button
+            className={`px-3 py-2 rounded ${rangeType === 'all' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => setRangeType('all')}
+          >
+            All
+          </button>
+          <button
+            className={`px-3 py-2 rounded ${rangeType === 'today' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => setRangeType('today')}
+          >
+            Today
+          </button>
+          <button
+            className={`px-3 py-2 rounded ${rangeType === 'lastweek' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => setRangeType('lastweek')}
+          >
+            Last Week
+          </button>
+          <button
+            className={`px-3 py-2 rounded ${rangeType === 'lastmonth' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+            onClick={() => setRangeType('lastmonth')}
+          >
+            Last Month
+          </button>
+          <div className="flex items-center gap-2">
+            <button
+              className={`px-3 py-2 rounded ${rangeType === 'custom' ? 'bg-blue-600 text-white' : 'bg-gray-100 text-gray-700'}`}
+              onClick={() => setRangeType('custom')}
+            >
+              Custom Range
+            </button>
+            {rangeType === 'custom' && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="date"
+                  value={customStart}
+                  onChange={e => setCustomStart(e.target.value)}
+                  className="border rounded px-2 py-1"
+                  max={customEnd || undefined}
+                />
+                <span className="mx-1">to</span>
+                <input
+                  type="date"
+                  value={customEnd}
+                  onChange={e => setCustomEnd(e.target.value)}
+                  className="border rounded px-2 py-1"
+                  min={customStart || undefined}
+                />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">

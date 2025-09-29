@@ -1,4 +1,4 @@
-import { createBrowserRouter ,Navigate } from "react-router-dom";
+import { createHashRouter ,Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import { UserLayout } from "./layouts/UserLayout";
 import { AdminLayout } from "./layouts/AdminLayout";
@@ -23,7 +23,6 @@ import UserRoute from "./components/UserRoute";
 import AdminRoute from "./components/admin/AdminRoute";
 import { SystemSettings } from "./pages/admin/SystemSettings";
 import { UserSettings } from "./pages/UserSetting";
-import { ReceiptDemoPage } from "./util/ReceiptDemoPage";
 
 // Root redirect based on authentication status
 const RootRedirect = () => {
@@ -40,7 +39,7 @@ const RootRedirect = () => {
   return <Navigate to="/dashboard" replace />;
 };
 
-const router = createBrowserRouter([
+const router = createHashRouter([
   // Public Routes
   {
     path: "/login",
@@ -50,10 +49,7 @@ const router = createBrowserRouter([
     path: "/",
     element: <RootRedirect />
   },
-  {
-    path: "/bill",
-    element: <ReceiptDemoPage />
-  },
+  
 
   // USER-PROTECTED ROUTES (Cashier / Regular User)
   {

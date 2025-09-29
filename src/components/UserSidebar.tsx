@@ -4,7 +4,7 @@ import {
     MdDashboard, 
     MdPointOfSale, 
     MdShoppingBag, 
-    MdPerson, 
+    // MdPerson, 
     MdSettings,
     MdInventory,
     MdLogout 
@@ -19,7 +19,7 @@ const UserSidebar = () => {
         { path: '/dashboard/inventory', icon: <MdInventory size={20} />, label: 'Inventory' },
         { path: '/dashboard/my-orders', icon: <MdShoppingBag size={20} />, label: 'My Orders' },
         // { path: '/dashboard/search', icon: <MdSearch size={20} />, label: 'Search Products' },
-        { path: '/dashboard/profile', icon: <MdPerson size={20} />, label: 'Profile' },
+        // { path: '/dashboard/profile', icon: <MdPerson size={20} />, label: 'Profile' },
         { path: '/dashboard/settings', icon: <MdSettings size={20} />, label: 'Settings' },
     ];
 

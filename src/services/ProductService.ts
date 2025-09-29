@@ -72,3 +72,13 @@ export const getProductsWithLowQty = async () => {
     }
   }
 };
+
+export const getActiveProducts = async () => {
+  try {
+    const response = await apiClient.get("/products/active");
+    return response.data;
+  } catch (error) {
+    console.error("Fetching active products failed:", error);
+    throw error;
+  }
+};

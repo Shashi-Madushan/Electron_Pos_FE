@@ -37,7 +37,9 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
 
   const handleDiscountKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter') {
-      onAdd(product, quantity === '' ? 1 : quantity, Number(discount) || 0);
+      const sanitizedDiscount = Math.min(Number(discount) || 0, originalTotal);
+      setDiscount(String(sanitizedDiscount));
+      onAdd(product, quantity === '' ? 1 : quantity, sanitizedDiscount);
     }
   };
 
@@ -70,20 +72,30 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
     if (current > 1) setQuantity(current - 1);
   };
 
+  const handleDiscountBlur = () => {
+    const sanitizedDiscount = Math.min(Number(discount) || 0, originalTotal);
+    setDiscount(String(sanitizedDiscount));
+  };
+
   const incrementDiscount = () => {
-    const current = discount === '' ? 0 : Number(discount);
-    const next = Math.min(100, Math.max(0, current + 1));
+    const current = Number(discount) || 0;
+    const step = originalTotal >= 1000 ? 100 : originalTotal >= 100 ? 10 : 5; // Dynamic step based on total
+    const maxDiscount = originalTotal;
+    const next = Math.min(maxDiscount, current + step);
     setDiscount(String(next));
   };
   const decrementDiscount = () => {
-    const current = discount === '' ? 0 : Number(discount);
-    const next = Math.min(100, Math.max(0, current - 1));
+    const current = Number(discount) || 0;
+    const step = originalTotal >= 1000 ? 100 : originalTotal >= 100 ? 10 : 5; // Dynamic step based on total
+    const next = Math.max(0, current - step);
     setDiscount(String(next));
   };
 
-  const originalTotal = product.salePrice * (quantity === '' ? 1 : quantity);
-  const discountAmount = originalTotal * (Number(discount) / 100 || 0);
-  const finalTotal = originalTotal - discountAmount;
+  const qty = quantity === '' ? 1 : quantity;
+  const originalTotal = product.salePrice * qty;
+  const perItemDiscount = Math.min(Number(discount) || 0, product.salePrice); // Limit per-item discount
+  const totalDiscount = perItemDiscount * qty;
+  const finalTotal = Math.max(0, originalTotal - totalDiscount);
 
   // stock badge (enhanced)
   const stockStatus = product.qty === 0 ? 'out' : product.qty < 5 ? 'low' : 'ok';
@@ -220,7 +232,7 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2">Discount (%)</label>
+              <label className="block text-sm font-medium mb-2">Discount (LKR)</label>
               <div className="flex items-center gap-3">
                 <button
                   onClick={decrementDiscount}
@@ -233,18 +245,19 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
                   ref={discountRef}
                   type="number"
                   min={0}
-                  max={100}
+                  max={originalTotal}
                   value={discount}
                   onChange={(e) => {
                     const value = e.target.value;
-                    if (value === '' || (Number(value) >= 0 && Number(value) <= 100)) {
+                    if (value === '' || (Number(value) >= 0 && Number(value) <= product.salePrice)) {
                       setDiscount(value);
                     }
                   }}
                   onKeyDown={handleDiscountKeyDown}
+                  onBlur={handleDiscountBlur}
                   className="w-24 text-center border rounded p-2"
                   placeholder="0"
-                  aria-label="Discount percent"
+                  aria-label="Discount amount"
                 />
                 <button
                   onClick={incrementDiscount}
@@ -253,9 +266,9 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
                 >
                   +
                 </button>
-                <div className="text-sm text-gray-500 ml-2">Max 100%</div>
+                <div className="text-sm text-gray-500 ml-2">Max LKR {originalTotal}</div>
               </div>
-              {Number(discount) > 50 && (
+              {Number(discount) > originalTotal / 2 && (
                 <div className="mt-2 text-sm text-yellow-700">Large discount applied</div>
               )}
             </div>
@@ -275,8 +288,12 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
                   <span>LKR {originalTotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm text-red-600 mt-1">
-                  <span>Discount</span>
-                  <span>-LKR {discountAmount.toFixed(2)}</span>
+                  <span>Discount (per item)</span>
+                  <span>-LKR {perItemDiscount.toFixed(2)} × {qty}</span>
+                </div>
+                <div className="flex justify-between text-sm text-red-600 mt-1">
+                  <span>Total Discount</span>
+                  <span>-LKR {totalDiscount.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-bold text-lg border-t pt-2 mt-2">
                   <span>Final Total</span>
@@ -295,7 +312,10 @@ const AddToCartModal: React.FC<AddToCartModalProps> = ({ product, onClose, onAdd
             Cancel
           </button>
           <button
-            onClick={() => onAdd(product, quantity === '' ? 1 : quantity, Number(discount) || 0)}
+            onClick={() => {
+              console.log('Add to Cart:', { product, quantity: quantity === '' ? 1 : quantity, totalDiscount });
+              onAdd(product, quantity === '' ? 1 : quantity, perItemDiscount);
+            }}
             className="flex-1 px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50"
             disabled={product.qty === 0}
           >

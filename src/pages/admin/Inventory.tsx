@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { getProductsWithLowQty, getAllProducts, updateProduct } from '../../services/ProductService';
+import { getProductsWithLowQty, updateProduct, getActiveProducts } from '../../services/ProductService';
 import { getAllCategories } from '../../services/CategoryService';
 
 interface Product {
@@ -48,7 +48,7 @@ const Inventory: React.FC = () => {
         } catch (lowStockError) {
           console.warn("Low stock endpoint failed, filtering all products:", lowStockError);
           // Fallback: get all products and filter for low stock
-          const allProductsResponse = await getAllProducts();
+          const allProductsResponse = await getActiveProducts();
           const allProducts = allProductsResponse?.productDTOList || [];
           const lowStockProducts = allProducts.filter((product: Product) => product.qty < 10);
           setLowStockProducts(lowStockProducts);
@@ -250,16 +250,11 @@ const Inventory: React.FC = () => {
                         <div className="flex space-x-2">
                           <button 
                             onClick={() => handleRestockClick(product)}
-                            className="text-blue-600 hover:text-blue-900"
+                            className="bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-semibold shadow hover:bg-blue-700 transition-colors"
                           >
                             Restock
                           </button>
-                          <button 
-                            className="bg-gray-100 text-gray-700 px-3 py-1 rounded-md text-xs font-medium cursor-default"
-                            title={`Current stock: ${product.qty} units`}
-                          >
-                            Stock: {product.qty}
-                          </button>
+
                         </div>
                       </td>
                     </tr>

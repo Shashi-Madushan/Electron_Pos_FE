@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { SaleItemDTO } from '../types/Sale';
 import type { Product } from '../types/Product';
 
@@ -6,12 +6,26 @@ interface OrderSummaryProps {
   items: SaleItemDTO[];
   products: Product[];
   onUpdateQuantity: (productId: string, change: number) => void;
-  onRemoveItem: (productId: string) => void; // added prop
+  onRemoveItem: (productId: string) => void;
+  onOrderTotalsChange?: (totals: {
+    originalTotal: number;
+    itemDiscounts: number;
+    subtotal: number;
+    orderDiscountPercentage: number;
+    orderDiscount: number;
+  }) => void;
 }
 
-const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQuantity, onRemoveItem }) => {
+const OrderSummary: React.FC<OrderSummaryProps> = ({
+  items,
+  products,
+  onUpdateQuantity,
+  onRemoveItem,
+  onOrderTotalsChange,
+}) => {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+  const [orderDiscount, setOrderDiscount] = useState<number>(0);
 
   // Helper to get product info
   const getProduct = (productId: number) => {
@@ -20,16 +34,20 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
 
   const originalTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
-    return sum + (product?.salePrice || 0) * item.qty;
+    const originalPrice = product?.salePrice || 0;
+    return sum + originalPrice * item.qty;
   }, 0);
 
   const discountTotal = items.reduce((sum, item) => {
     const product = getProduct(item.productId);
-    return sum + ((product?.salePrice || 0) - item.price) * item.qty;
+    const originalPrice = product?.salePrice || 0;
+    const discountAmount = originalPrice - (originalPrice - item.discount);
+    return sum + discountAmount * item.qty;
   }, 0);
 
-  const subtotal = items.reduce((sum, item) => sum + item.price * item.qty, 0);
-  const total = subtotal;
+  const subtotal = originalTotal - discountTotal;
+  const totalDiscount = Math.min(subtotal, subtotal * (orderDiscount / 100));
+  const total = subtotal - totalDiscount;
 
   const formatLKR = (amount: number) => {
     return `LKR ${amount.toFixed(2)}`;
@@ -47,6 +65,31 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
     setShowConfirmation(false);
     setItemToRemove(null);
   };
+
+  // Add useEffect to notify parent of changes
+  useEffect(() => {
+    if (onOrderTotalsChange) {
+      onOrderTotalsChange({
+        originalTotal,
+        itemDiscounts: discountTotal,
+        subtotal,
+        orderDiscountPercentage: orderDiscount,
+        orderDiscount: totalDiscount
+      });
+    }
+  }, [originalTotal, discountTotal, subtotal, orderDiscount, totalDiscount]);
+
+  if (items.length === 0) {
+    return (
+      <div className="flex-1 bg-white rounded-lg border border-gray-200 p-4 flex flex-col items-center justify-center text-gray-400">
+        <svg className="w-16 h-16 mb-4 opacity-50" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+        <span className="text-lg font-medium">Cart is empty</span>
+        <p className="text-sm mt-2">Add some products to get started</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -75,7 +118,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
                           formatLKR(item.price)
                         )}
                         {item.discount > 0 && (
-                          <span className="text-red-500 text-sm ml-2">(-{item.discount}%)</span>
+                          <span className="text-red-500 text-sm ml-2">(-{item.discount})</span>
                         )}
                       </p>
                     </div>
@@ -115,13 +158,30 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ items, products, onUpdateQu
             <span className="font-medium">{formatLKR(originalTotal)}</span>
           </div>
           <div className="flex justify-between mb-2 text-red-600">
-            <span>Total Discount</span>
+            <span>Item Discounts</span>
             <span>-{formatLKR(discountTotal)}</span>
           </div>
           <div className="flex justify-between mb-2">
             <span className="text-gray-600">Subtotal</span>
             <span className="font-medium">{formatLKR(subtotal)}</span>
           </div>
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-gray-600">Order Discount (%)</span>
+            <input
+              type="number"
+              min="0"
+              max={100}
+              value={orderDiscount}
+              onChange={(e) => setOrderDiscount(Math.min(100, Math.max(0, Number(e.target.value))))}
+              className="w-20 px-2 py-1 border border-gray-300 rounded text-right"
+            />
+          </div>
+          {orderDiscount > 0 && (
+            <div className="flex justify-between mb-2 text-red-600">
+              <span>Order Discount</span>
+              <span>-{formatLKR(totalDiscount)}</span>
+            </div>
+          )}
           <div className="flex justify-between mb-4">
             <span className="font-bold text-black">Total</span>
             <span className="font-bold text-blue-600">{formatLKR(total)}</span>

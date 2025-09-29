@@ -1,4 +1,3 @@
-
 export type Currency = "LKR" | "USD" | "EUR" | string;
 
 export interface BusinessInfo {
@@ -26,6 +25,11 @@ export interface Sale {
     userId: number;
     customerId: number;
     saleItems: SaleItem[];
+    originalTotal: number;
+    itemDiscounts: number;
+    subtotal: number;
+    orderDiscountPercentage: number;
+    orderDiscount: number;
 }
 export interface SaleItemDTO {
   saleItemId?: number | null;
@@ -46,5 +50,10 @@ export interface SaleDTO {
   userId: number;
   customerId: number | null;
   saleItems: SaleItemDTO[];
+  originalTotal: number;
+  itemDiscounts: number;
+  subtotal: number;
+  orderDiscountPercentage: number;
+  orderDiscount: number;
 }
 

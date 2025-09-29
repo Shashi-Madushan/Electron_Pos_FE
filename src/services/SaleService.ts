@@ -78,3 +78,43 @@ export const getAdminSalesStats = async () => {
     throw error;
   }
 };
+
+export const getSalesToday = async () => {
+  try {
+    const response = await apiClient.get('/sales/date-range?rangeType=today');
+    return response.data;
+  } catch (error) {
+    console.error("Fetching today's sales failed:", error);
+    throw error;
+  }
+};
+
+export const getSalesLastWeek = async () => {
+  try {
+    const response = await apiClient.get('/sales/date-range?rangeType=lastweek');
+    return response.data;
+  } catch (error) {
+    console.error("Fetching last week's sales failed:", error);
+    throw error;
+  }
+};
+
+export const getSalesLastMonth = async () => {
+  try {
+    const response = await apiClient.get('/sales/date-range?rangeType=lastmonth');
+    return response.data;
+  } catch (error) {
+    console.error("Fetching last month's sales failed:", error);
+    throw error;
+  }
+};
+
+export const getSalesCustomRange = async (startDate: string, endDate: string) => {
+  try {
+    const response = await apiClient.get(`/sales/date-range?rangeType=custom&startDate=${startDate}&endDate=${endDate}`);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching custom range sales failed:", error);
+    throw error;
+  }
+};
