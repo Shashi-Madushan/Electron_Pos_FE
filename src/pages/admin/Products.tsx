@@ -196,13 +196,13 @@ const Products: React.FC = () => {
         setSelectedProductId(null); // remove highlight
     };
 
-    const handleImageUpload = (file: File) => {
-        const reader = new FileReader();
-        reader.onloadend = () => {
-            setNewProduct({ ...newProduct, image: reader.result as string });
-        };
-        reader.readAsDataURL(file);
-    };
+    // const handleImageUpload = (file: File) => {
+    //     const reader = new FileReader();
+    //     reader.onloadend = () => {
+    //         setNewProduct({ ...newProduct, image: reader.result as string });
+    //     };
+    //     reader.readAsDataURL(file);
+    // };
 
     const handleGenerateBarcodeClick = (product: Product) => {
         setSelectedProductForBarcode(product);
@@ -427,7 +427,7 @@ const Products: React.FC = () => {
                         </div>
                         <div className="p-6 space-y-4">
                             {/* Image Upload */}
-                            <div className="text-center">
+                            {/* <div className="text-center">
                                 <div className="w-20 h-20 mx-auto mb-3 rounded overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
                                     {newProduct.image ? (
                                         <img
@@ -451,7 +451,7 @@ const Products: React.FC = () => {
                                         className="hidden"
                                     />
                                 </label>
-                            </div>
+                            </div> */}
                             <div className="grid grid-cols-2 gap-4">
                                 <div>
                                     <label className="block text-sm font-medium text-black mb-1">Product Name *</label>
