@@ -223,6 +223,14 @@ const Products: React.FC = () => {
             });
     };
 
+    const isFormValid = 
+        newProduct.productName.trim() !== '' &&
+        newProduct.categoryId &&
+        newProduct.cost > 0 &&
+        newProduct.salePrice > 0 &&
+        newProduct.qty > 0;
+
+
     // const handlePrintBarcode = () => {
     //     if (barcodeRef.current === null) {
     //         return;
@@ -551,7 +559,8 @@ const Products: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleAddProduct}
-                                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium"
+                                disabled={!isFormValid}
+                                className="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700 font-medium disabled:bg-blue-300"
                             >
                                 {editingProduct ? 'Update Product' : 'Add Product'}
                             </button>
