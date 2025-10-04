@@ -213,6 +213,7 @@ const PosPage = () => {
     console.log('Prepared SaleDTO:', saleDTO);
     try {
       const response = await saveSale(saleDTO);
+      console.log("Response saleDTO :" , response.saleDTO)
       if (response.statusCode === 201) {
         // Create a complete sale object combining response and prepared data
         const newSaleData: Sale = {

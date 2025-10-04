@@ -293,6 +293,8 @@ export default function Receipt(props: ReceiptProps) {
             </>
           )}
           <div className="row bold"><span>Grand Total</span><span>{formatMoney(sale.totalAmount, currency)}</span></div>
+          <div className="row"><span>Payment Amount</span><span>{formatMoney(sale.paymentAmount, currency)}</span></div>
+          <div className="row"><span>Balance</span><span>{formatMoney(sale.balance, currency)}</span></div>
         </div>
 
         <div className="footer"><strong>ご購入ありがとうございました！</strong><br />Thank you for your purchase!</div>
