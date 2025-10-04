@@ -116,6 +116,7 @@ export default function Receipt(props: ReceiptProps) {
   const [user, setUser] = useState<User | null>(null);
   const [customer, setCustomer] = useState<Customer | null>(null);
   const [products, setProducts] = useState<Record<string, Product>>({});
+  const [itemCount, setItemCount] = useState<number>(0);
 
   useEffect(() => {
     // Fetch user data or any other side effects
@@ -148,6 +149,8 @@ export default function Receipt(props: ReceiptProps) {
     };
 
     loadData();
+
+    setItemCount(sale.saleItems.length);
     console.log("Sale Data:", sale);
   }, []);
 
@@ -267,8 +270,13 @@ export default function Receipt(props: ReceiptProps) {
                 <div className="item-name">
                   <div>{product?.productName || `Product ${it.productId}`}</div>
                   <div style={{ color: "#6b7280", fontSize: 10 }}>
-                    {formatMoney(it.price, currency)} × {it.qty}
-                    {discount > 0 && <> · Disc: {formatMoney(discount, currency)}</>}
+                    {formatMoney(it.price + (it.discount ?? 0), currency)} × {it.qty}
+                    {discount > 0 && (
+                      <>
+                        <br />
+                        Disc: {formatMoney((discount * it.qty), currency)}
+                      </>
+                    )}
                   </div>
                 </div>
                 {/* <div className="right">{it.qty}</div> */}
@@ -284,6 +292,7 @@ export default function Receipt(props: ReceiptProps) {
         {/* Totals */}
         <div className="totals mono">
           <div className="row"><span>Orginal Total</span><span>{formatMoney(sale.originalTotal, currency)}</span></div>
+          <div className="row"><span>Item Count</span><span>{itemCount}</span></div>
           <div className="row"><span>Item Discounts</span><span>-{formatMoney(sale.itemDiscounts, currency)}</span></div>
           <div className="row"><span>Sub Total</span><span>{formatMoney(sale.subtotal, currency)}</span></div>
           {sale.orderDiscountPercentage > 0 && (
@@ -292,8 +301,10 @@ export default function Receipt(props: ReceiptProps) {
               <div className="row"><span>Order Discount</span><span>-{formatMoney(sale.orderDiscount, currency)}</span></div>
             </>
           )}
+          <div className="sep" />
           <div className="row bold"><span>Grand Total</span><span>{formatMoney(sale.totalAmount, currency)}</span></div>
-          <div className="row"><span>Payment Amount</span><span>{formatMoney(sale.paymentAmount, currency)}</span></div>
+          <div className="sep" />
+          <div className="row"><span>Pay Amount</span><span>{formatMoney(sale.paymentAmount, currency)}</span></div>
           <div className="row"><span>Balance</span><span>{formatMoney(sale.balance, currency)}</span></div>
         </div>
 
