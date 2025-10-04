@@ -86,6 +86,7 @@ const router = createHashRouter([
     ),
     children: [
       { path: "", element: <AdminDashboard /> }, // Admin overview dashboard
+      { path: "pos", element: <PosPage /> },
       { path: "products", element: <Products /> }, // CRUD products
       { path: "categories", element: <Categories /> }, // Manage product categories
       { path: "brands", element: <Brands /> }, // Manage brands
