@@ -55,5 +55,7 @@ export interface SaleDTO {
   subtotal: number;
   orderDiscountPercentage: number;
   orderDiscount: number;
+  paymentAmount: number;
+  balance: number;
 }
 

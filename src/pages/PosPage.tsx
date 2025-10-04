@@ -16,7 +16,17 @@ import CheckoutSection from '../components/CheckoutSection';
 
 interface Brand {
   brandId: string | number;
-  brandName: string;  // Changed from 'name' to 'brandName'
+  brandName: string;  
+}
+
+interface OrderTotals {
+  originalTotal: number;
+  itemDiscounts: number;
+  subtotal: number;
+  orderDiscountPercentage: number;
+  orderDiscount: number;
+  paymentAmount?: number;
+  balance?: number;
 }
 
 const PosPage = () => {
@@ -37,7 +47,7 @@ const PosPage = () => {
   const barcodeInputRef = useRef<HTMLInputElement>(null!);
   const [showReceipt, setShowReceipt] = useState(false);
   const [saleData, setSaleData] = useState<Sale | null>(null);
-  const [orderTotals, setOrderTotals] = useState({
+  const [orderTotals, setOrderTotals] = useState<OrderTotals>({
     originalTotal: 0,
     itemDiscounts: 0,
     subtotal: 0,
@@ -173,6 +183,8 @@ const PosPage = () => {
       subtotal: orderTotals.subtotal,
       orderDiscountPercentage: orderTotals.orderDiscountPercentage,
       orderDiscount: orderTotals.orderDiscount,
+      paymentAmount: orderTotals.paymentAmount ?? 0,
+      balance: orderTotals.balance ?? 0,
       saleItems: orderItems.map(item => ({
         saleItemId: null,
         saleId: null,
