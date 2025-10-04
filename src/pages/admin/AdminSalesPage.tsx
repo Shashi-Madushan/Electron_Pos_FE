@@ -18,6 +18,8 @@ interface Sale {
   userId: number;
   customerId: number | null;
   saleItems: null;
+  paymentAmount?: number; // added optional
+  balance?: number;       // added optional
 }
 
 interface SaleItem {
@@ -191,8 +193,10 @@ const AdminSalesPage: React.FC = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Amount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance (LKR)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -203,8 +207,14 @@ const AdminSalesPage: React.FC = () => {
               <tr key={sale.saleId}>
                 <td className="px-6 py-4 whitespace-nowrap">#{sale.saleId}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{new Date(sale.saleDate).toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap">LKR {sale.totalAmount.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">LKR {sale.totalDiscount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.totalAmount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.totalDiscount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {(sale.paymentAmount ?? 0).toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {(sale.balance ?? 0).toFixed(2)}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">{sale.paymentMethod}</td>
                 <td className="px-6 py-4 whitespace-nowrap">#{sale.userId}</td>
                 <td className="px-6 py-4 whitespace-nowrap">

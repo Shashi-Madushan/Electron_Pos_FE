@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
     MdDashboard,
     MdPeople,
+    MdPointOfSale,
     MdInventory,
     MdCategory,
     MdLocalOffer,
@@ -18,6 +19,7 @@ const AdminSidebar = () => {
 
     const menuItems = [
         { path: '/admin', icon: <MdDashboard size={20} />, label: 'Dashboard', end: true },
+        { path: '/admin/pos', icon: <MdPointOfSale size={20} />, label: 'POS' },
         { path: '/admin/users', icon: <MdPeople size={20} />, label: 'Users' },
         { path: '/admin/inventory', icon: <MdInventory size={20} />, label: 'Inventory' },
         { path: '/admin/products', icon: <MdLocalOffer size={20} />, label: 'Products' },
@@ -52,10 +54,9 @@ const AdminSidebar = () => {
                                 to={item.path}
                                 end={item.end}
                                 className={({ isActive }) =>
-                                    `flex items-center space-x-3 px-4 py-3 text-sm font-medium transition-colors ${
-                                        isActive
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-gray-700 hover:bg-gray-100'
+                                    `flex items-center space-x-3 px-4 py-3 text-sm font-medium transition-colors ${isActive
+                                        ? 'bg-blue-600 text-white'
+                                        : 'text-gray-700 hover:bg-gray-100'
                                     }`
                                 }
                             >
