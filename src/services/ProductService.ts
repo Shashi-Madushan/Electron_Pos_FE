@@ -82,3 +82,50 @@ export const getActiveProducts = async () => {
     throw error;
   }
 };
+
+export const getProductsByCategory = async (categoryId: string | number) => {
+  try {
+    const response = await apiClient.get(`/products/category/${categoryId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching products by category failed:", error);
+    throw error;
+  }
+};
+
+export const getProductsByBrand = async (brandId: string | number) => {
+  try {
+    const response = await apiClient.get(`/products/brand/${brandId}`);
+    return response.data;
+  } catch (error) {
+    console.error("Fetching products by brand failed:", error);
+    throw error;
+  }
+};
+
+export const searchProducts = async (query: string) => {
+  try {
+    const response = await apiClient.get(`/products/search`, {
+      params: { q: query }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Searching products failed:", error);
+    throw error;
+  }
+};
+
+export const getProductsByCategoryAndBrand = async (
+  categoryId: string | number,
+  brandId: string | number
+) => {
+  try {
+    const response = await apiClient.get(`/products/by-category-brand`, {
+      params: { categoryId, brandId }
+    });
+    return response.data;
+  } catch (error) {
+    console.error("Fetching products by category and brand failed:", error);
+    throw error;
+  }
+};
