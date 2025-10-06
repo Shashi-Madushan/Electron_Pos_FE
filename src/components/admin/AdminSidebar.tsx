@@ -31,7 +31,7 @@ const AdminSidebar = () => {
     ];
 
     return (
-        <div className="h-screen w-64 bg-white text-black fixed left-0 top-0 overflow-y-auto shadow-lg">
+        <div className="h-screen w-54 bg-white text-black fixed left-0 top-0 overflow-y-auto shadow-lg">
             {/* Admin Profile Section */}
             <div className="p-4 border-b border-gray-200">
                 <div className="flex items-center space-x-3">
