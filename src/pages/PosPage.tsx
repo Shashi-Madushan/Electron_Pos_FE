@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import CategoryScroll from '../components/CategoryScroll';
 import { getAllCategories, type Category } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
-import { getActiveProducts  } from '../services/ProductService';
+import { 
+  getActiveProducts,
+  getProductsByCategory,
+  getProductsByBrand,
+  searchProducts,
+  getProductsByCategoryAndBrand
+} from '../services/ProductService';
 import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
 import type { Sale, SaleDTO, SaleItemDTO } from '../types/Sale';
@@ -55,6 +61,7 @@ const PosPage = () => {
     orderDiscount: 0
   });
 
+  // Fetch categories, brands, and initial products
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -83,13 +90,61 @@ const PosPage = () => {
     fetchData();
   }, []);
 
-  // Filter products based on selected category, brand, and search
-  const filteredProducts = products.filter(product => {
-    const categoryMatch = selectedCategory === 'all' || product.categoryId.toString() === selectedCategory;
-    const brandMatch = selectedBrand === 'all' || product.brandId.toString() === selectedBrand;
-    const searchMatch = product.productName.toLowerCase().includes(search.toLowerCase());
-    return categoryMatch && brandMatch && searchMatch;
-  });
+  // Fetch products from backend when filters/search change
+  useEffect(() => {
+    const fetchFilteredProducts = async () => {
+      try {
+        // All filters are 'all' and search is empty: get all active products
+        if (selectedCategory === 'all' && selectedBrand === 'all' && search.trim() === '') {
+          const productsData = await getActiveProducts();
+          setProducts(productsData.productDTOList);
+        }
+        // Only search is present
+        else if (search.trim() !== '' && selectedCategory === 'all' && selectedBrand === 'all') {
+          const productsData = await searchProducts(search.trim());
+          setProducts(productsData.productDTOList);
+        }
+        // Category and brand are selected (not 'all'), no search
+        else if (selectedCategory !== 'all' && selectedBrand !== 'all' && search.trim() === '') {
+          const productsData = await getProductsByCategoryAndBrand(selectedCategory, selectedBrand);
+          setProducts(productsData.productDTOList);
+        }
+        // Only category is selected
+        else if (selectedCategory !== 'all' && selectedBrand === 'all' && search.trim() === '') {
+          const productsData = await getProductsByCategory(selectedCategory);
+          setProducts(productsData.productDTOList);
+        }
+        // Only brand is selected
+        else if (selectedBrand !== 'all' && selectedCategory === 'all' && search.trim() === '') {
+          const productsData = await getProductsByBrand(selectedBrand);
+          setProducts(productsData.productDTOList);
+        }
+        // Category and search
+        else if (selectedCategory !== 'all' && search.trim() !== '' && selectedBrand === 'all') {
+          // Backend does not have direct endpoint, so filter after search
+          const productsData = await searchProducts(search.trim());
+          setProducts(productsData.productDTOList.filter((p: any) => p.categoryId?.toString() === selectedCategory));
+        }
+        // Brand and search
+        else if (selectedBrand !== 'all' && search.trim() !== '' && selectedCategory === 'all') {
+          const productsData = await searchProducts(search.trim());
+          setProducts(productsData.productDTOList.filter((p: any) => p.brandId?.toString() === selectedBrand));
+        }
+        // Category, brand, and search
+        else if (selectedCategory !== 'all' && selectedBrand !== 'all' && search.trim() !== '') {
+          const productsData = await searchProducts(search.trim());
+          setProducts(productsData.productDTOList.filter(
+            (p: any) => p.categoryId?.toString() === selectedCategory && p.brandId?.toString() === selectedBrand
+          ));
+        }
+      } catch (error) {
+        console.error('Error fetching filtered products:', error);
+        setProducts([]);
+      }
+    };
+
+    fetchFilteredProducts();
+  }, [selectedCategory, selectedBrand, search]);
 
   const handleUpdateQuantity = (productId: string, change: number) => {
     setOrderItems(items =>
@@ -302,7 +357,7 @@ const PosPage = () => {
               <div className="h-full overflow-y-auto p-2">
                 <ProductsDisplay
                   viewMode={viewMode}
-                  products={filteredProducts}
+                  products={products}
                   onProductSelect={handleProductSelect}
                 />
               </div>
