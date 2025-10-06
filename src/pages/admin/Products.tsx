@@ -169,9 +169,17 @@ const Products: React.FC = () => {
         fetchBrands();
     }, []);
 
-    // Fetch products when filters/search change
+    // Only fetch products when filters/search change, but not on mount (products is empty by default)
     useEffect(() => {
-        fetchFilteredProducts();
+        // Only fetch if a filter/search is applied
+        if (
+            searchTerm.trim() !== '' ||
+            selectedCategory !== 'All' ||
+            selectedBrand !== 'All' ||
+            statusFilter !== 'All'
+        ) {
+            fetchFilteredProducts();
+        }
         // eslint-disable-next-line
     }, [searchTerm, selectedCategory, selectedBrand, statusFilter, categories, brands]);
 
@@ -340,10 +348,10 @@ const Products: React.FC = () => {
         <div className="min-h-screen bg-white p-4 md:p-8">
             <div className="max-w-8xl mx-auto">
                 {/* Controls Section */}
-                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200" >
-                    <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                        {/* Search */}
-                        <div className=" flex-1 max-w-md">
+                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200">
+                    <div className="flex flex-col gap-4">
+                        {/* Search on top */}
+                        <div className="w-full max-w-md">
                             <input
                                 type="text"
                                 placeholder="Search products..."
@@ -352,8 +360,8 @@ const Products: React.FC = () => {
                                 className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
                             />
                         </div>
-                        {/* Filters */}
-                        <div className="flex gap-3 flex-wrap">
+                        {/* Filters below search */}
+                        <div className="flex gap-3 flex-wrap items-center">
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -421,6 +429,20 @@ const Products: React.FC = () => {
                                     Cards
                                 </button>
                             </div>
+                            {/* Fetch All Products Button */}
+                            <button
+                                onClick={async () => {
+                                    const response = await getAllProducts();
+                                    setProducts(response.productDTOList || []);
+                                    setSearchTerm('');
+                                    setSelectedCategory('All');
+                                    setSelectedBrand('All');
+                                    setStatusFilter('All');
+                                }}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium ml-4"
+                            >
+                                View All Products
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -498,7 +520,7 @@ const Products: React.FC = () => {
             {/* Fixed Add Product Button */}
             <button
                 onClick={() => setIsModalOpen(true)}
-                className="fixed bottom-8 right-8 bg-white text-blue-700 border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all duration-200 z-50"
+                className="fixed bottom-8 right-8 bg-blue-600 text-white border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all duration-200 z-50"
                 style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
             >
                 Add Product
