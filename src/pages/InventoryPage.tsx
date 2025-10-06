@@ -1,7 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { getAllCategories } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
-import { getActiveProducts } from '../services/ProductService';
+import {
+    getActiveProducts,
+    getProductsByCategory,
+    getProductsByBrand,
+    searchProducts,
+    getProductsWithLowQty,
+    getProductsByCategoryAndBrand
+} from '../services/ProductService';
 
 interface Product {
     productId: string;
@@ -32,10 +39,10 @@ const InventoryPage: React.FC = () => {
     const [brands, setBrands] = useState<Brand[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
+    const [selectedBrand, setSelectedBrand] = useState<string>('All');
     const [statusFilter, setStatusFilter] = useState<string>('All');
     const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock'>('name');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-    const [viewMode, setViewMode] = useState<'table' | 'grid'>('table');
 
     const fetchCategories = async () => {
         const response = await getAllCategories();
@@ -48,15 +55,79 @@ const InventoryPage: React.FC = () => {
     };
 
     const fetchProducts = async () => {
+        // If searching, use searchProducts
+        if (searchTerm.trim()) {
+            const response = await searchProducts(searchTerm.trim());
+            setProducts(response.productDTOList);
+            return;
+        }
+
+        // If both category and brand are selected (not 'All'), use getProductsByCategoryAndBrand
+        if (selectedCategory !== 'All' && selectedBrand !== 'All') {
+            const categoryObj = categories.find(cat => cat.name === selectedCategory);
+            const brandObj = brands.find(br => br.brandName === selectedBrand);
+            if (categoryObj && brandObj) {
+                const response = await getProductsByCategoryAndBrand(categoryObj.categoryId, brandObj.brandId);
+                setProducts(response.productDTOList);
+                return;
+            }
+        }
+
+        // If only category is selected
+        if (selectedCategory !== 'All') {
+            const categoryObj = categories.find(cat => cat.name === selectedCategory);
+            if (categoryObj) {
+                const response = await getProductsByCategory(categoryObj.categoryId);
+                setProducts(response.productDTOList);
+                return;
+            }
+        }
+
+        // If only brand is selected
+        if (selectedBrand !== 'All') {
+            const brandObj = brands.find(br => br.brandName === selectedBrand);
+            if (brandObj) {
+                const response = await getProductsByBrand(brandObj.brandId);
+                setProducts(response.productDTOList);
+                return;
+            }
+        }
+
+        // If status is 'Low Stock'
+        if (statusFilter === 'Low Stock') {
+            const response = await getProductsWithLowQty();
+            setProducts(response.productDTOList);
+            return;
+        }
+
+        // If status is 'Out of Stock'
+        if (statusFilter === 'Out of Stock') {
+            const response = await getActiveProducts();
+            setProducts(response.productDTOList.filter((p: Product) => p.qty === 0));
+            return;
+        }
+
+        // If status is 'In Stock'
+        if (statusFilter === 'In Stock') {
+            const response = await getActiveProducts();
+            setProducts(response.productDTOList.filter((p: Product) => p.qty > 0));
+            return;
+        }
+
+        // Default: get all active products
         const response = await getActiveProducts();
         setProducts(response.productDTOList);
     };
 
     useEffect(() => {
-        fetchProducts();
         fetchCategories();
         fetchBrands();
     }, []);
+
+    useEffect(() => {
+        fetchProducts();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [searchTerm, selectedCategory, selectedBrand, statusFilter]);
 
     const getCategoryName = (categoryId: number) => {
         const category = categories.find(cat => cat.categoryId === categoryId);
@@ -85,36 +156,28 @@ const InventoryPage: React.FC = () => {
         }
     };
 
-    const filteredAndSortedProducts = products
-        .filter(product => {
-            const matchesSearch = product.productName.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === 'All' || getCategoryName(product.categoryId) === selectedCategory;
-            const matchesStatus = statusFilter === 'All' || getStatus(product.qty) === statusFilter;
-            return matchesSearch && matchesCategory && matchesStatus;
-        })
-        .sort((a, b) => {
-            let aValue, bValue;
-            switch (sortBy) {
-                case 'name':
-                    aValue = a.productName.toLowerCase();
-                    bValue = b.productName.toLowerCase();
-                    break;
-                case 'price':
-                    aValue = a.salePrice;
-                    bValue = b.salePrice;
-                    break;
-                case 'stock':
-                    aValue = a.qty;
-                    bValue = b.qty;
-                    break;
-                default:
-                    return 0;
-            }
-
-            return sortOrder === 'asc' ? 
-                (aValue < bValue ? -1 : 1) : 
-                (aValue > bValue ? -1 : 1);
-        });
+    const sortedProducts = [...products].sort((a, b) => {
+        let aValue, bValue;
+        switch (sortBy) {
+            case 'name':
+                aValue = a.productName.toLowerCase();
+                bValue = b.productName.toLowerCase();
+                break;
+            case 'price':
+                aValue = a.salePrice;
+                bValue = b.salePrice;
+                break;
+            case 'stock':
+                aValue = a.qty;
+                bValue = b.qty;
+                break;
+            default:
+                return 0;
+        }
+        return sortOrder === 'asc'
+            ? (aValue < bValue ? -1 : 1)
+            : (aValue > bValue ? -1 : 1);
+    });
 
     return (
         <div className="min-h-screen bg-white p-4 md:p-8">
@@ -149,6 +212,16 @@ const InventoryPage: React.FC = () => {
                                 ))}
                             </select>
                             <select
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                                className="px-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
+                            >
+                                <option value="All">All Brands</option>
+                                {brands.map(brand => (
+                                    <option key={brand.brandId} value={brand.brandName}>{brand.brandName}</option>
+                                ))}
+                            </select>
+                            <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="px-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
@@ -172,138 +245,86 @@ const InventoryPage: React.FC = () => {
                                 <option value="price-desc">Price High-Low</option>
                                 <option value="stock-desc">Stock High-Low</option>
                             </select>
-                            
-                            {/* View Toggle */}
-                            <div className="bg-gray-100 rounded p-1 flex border border-gray-200">
-                                <button
-                                    onClick={() => setViewMode('table')}
-                                    className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                                        viewMode === 'table'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-black hover:bg-gray-200'
-                                    }`}
-                                >
-                                    Table
-                                </button>
-                                <button
-                                    onClick={() => setViewMode('grid')}
-                                    className={`px-4 py-2 rounded transition-all duration-300 text-sm font-medium ${
-                                        viewMode === 'grid'
-                                            ? 'bg-blue-600 text-white'
-                                            : 'text-black hover:bg-gray-200'
-                                    }`}
-                                >
-                                    Cards
-                                </button>
-                            </div>
                         </div>
+                             {/* Fetch All Products Button */}
+                    <div className="flex ">
+                        <button
+                            onClick={() => {
+                                setSearchTerm('');
+                                setSelectedCategory('All');
+                                setSelectedBrand('All');
+                                setStatusFilter('All');
+                                fetchProducts();
+                            }}
+                            className="px-5 py-2 bg-blue-600 text-white rounded shadow hover:bg-blue-700 transition"
+                        >
+                            Fetch All Products
+                        </button>
                     </div>
+                    </div>
+               
                 </div>
 
                 {/* Content Section */}
                 <div className="bg-white shadow-sm rounded-lg border border-gray-200 overflow-hidden">
-                    {viewMode === 'table' ? (
-                        <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
-                            <table className="w-full">
-                                <thead className="sticky top-0 z-10 bg-blue-50 text-black border-b border-gray-200">
-                                    <tr>
-                                        <th className="p-4 text-left font-semibold">Product</th>
-                                        <th className="p-4 text-left font-semibold">Category</th>
-                                        <th className="p-4 text-left font-semibold">Brand</th>
-                                        <th className="p-4 text-left font-semibold">Price</th>
-                                        <th className="p-4 text-left font-semibold">Stock</th>
-                                        <th className="p-4 text-left font-semibold">Status</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {filteredAndSortedProducts.map((product, index) => (
-                                        <tr
-                                            key={product.productId}
-                                            className={`border-b border-gray-100 hover:bg-blue-50 transition-all duration-200 ${
-                                                index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
-                                            }`}
-                                        >
-                                            <td className="p-4">
-                                                <div className="flex items-center gap-3">
-                                                    <img
-                                                        src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
-                                                        alt={product.productName}
-                                                        className="w-10 h-10 rounded object-cover border border-gray-200"
-                                                    />
-                                                    <span className="font-medium text-black">{product.productName}</span>
-                                                </div>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getCategoryName(product.categoryId)}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getBrandName(product.brandId)}
-                                                </span>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className="text-black">LKR {product.salePrice}</span>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className="font-medium text-black">{product.qty}</span>
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(getStatus(product.qty))}`}>
-                                                    {getStatus(product.qty)}
-                                                </span>
-                                            </td>
-                                        </tr>
-                                    ))}
-                                </tbody>
-                            </table>
-                            {filteredAndSortedProducts.length === 0 && (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-500 text-lg">No products found matching your criteria</p>
-                                </div>
-                            )}
-                        </div>
-                    ) : (
-                        <div className="p-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                                {filteredAndSortedProducts.map((product) => (
-                                    <div key={product.productId} className="bg-white rounded border border-gray-200 shadow-sm hover:shadow-md transition-all duration-200">
-                                        <div className="relative">
-                                            <img
-                                                src={product.image || `https://ui-avatars.com/api/?name=${product.productName}&background=fff&color=000`}
-                                                alt={product.productName}
-                                                className="w-full h-40 object-cover border-b border-gray-100"
-                                            />
-                                            <span className={`absolute top-2 right-2 px-2 py-1 rounded text-xs font-medium ${getStatusColor(getStatus(product.qty))}`}>
+                    <div className="overflow-x-auto max-h-[calc(100vh-20rem)] overflow-y-auto">
+                        <table className="w-full">
+                            <thead className="sticky top-0 z-10 bg-blue-600 text-white border-b border-blue-700 shadow">
+                                <tr>
+                                    <th className="p-4 text-left font-semibold">Product</th>
+                                    <th className="p-4 text-left font-semibold">Category</th>
+                                    <th className="p-4 text-left font-semibold">Brand</th>
+                                    <th className="p-4 text-left font-semibold">Price</th>
+                                    <th className="p-4 text-left font-semibold">Stock</th>
+                                    <th className="p-4 text-left font-semibold">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {sortedProducts.map((product, index) => (
+                                    <tr
+                                        key={product.productId}
+                                        className={`border-b border-gray-100 transition-all duration-200 group ${
+                                            index % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                                        } hover:bg-blue-50`}
+                                    >
+                                        <td className="p-4">
+                                            <div className="flex items-center gap-3">
+                                                <span className="font-medium text-black group-hover:text-blue-700 transition-colors duration-200">{product.productName}</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
+                                                {getCategoryName(product.categoryId)}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
+                                                {getBrandName(product.brandId)}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className="text-black font-semibold">LKR {product.salePrice}</span>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`font-semibold ${product.qty === 0 ? 'text-red-600' : product.qty < 10 ? 'text-yellow-700' : 'text-green-700'}`}>
+                                                {product.qty}
+                                            </span>
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-medium ${getStatusColor(getStatus(product.qty))}`}>
                                                 {getStatus(product.qty)}
                                             </span>
-                                        </div>
-                                        <div className="p-4">
-                                            <div className="flex items-center justify-between mb-2">
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getCategoryName(product.categoryId)}
-                                                </span>
-                                                <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium border border-blue-100">
-                                                    {getBrandName(product.brandId)}
-                                                </span>
-                                            </div>
-                                            <h3 className="text-lg font-semibold text-black mb-2">{product.productName}</h3>
-                                            <div className="flex justify-between items-center">
-                                                <span className="text-black text-sm">Stock: {product.qty}</span>
-                                                <span className="font-semibold text-blue-700">${product.salePrice}</span>
-                                            </div>
-                                        </div>
-                                    </div>
+                                        </td>
+                                    </tr>
                                 ))}
+                            </tbody>
+                        </table>
+                        {sortedProducts.length === 0 && (
+                            <div className="text-center py-12">
+                                <p className="text-gray-500 text-lg">No products found matching your criteria</p>
                             </div>
-                            {filteredAndSortedProducts.length === 0 && (
-                                <div className="text-center py-12">
-                                    <p className="text-gray-500 text-lg">No products found matching your criteria</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
             </div>
         </div>
