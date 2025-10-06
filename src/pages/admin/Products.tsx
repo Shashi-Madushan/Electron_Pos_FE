@@ -1,7 +1,18 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { getAllCategories } from '../../services/CategoryService';
 import { getAllBrands } from '../../services/BrandService';
-import { deleteProduct, getAllProducts, saveProduct, updateProduct } from '../../services/ProductService';
+import {
+    deleteProduct,
+    getAllProducts,
+    saveProduct,
+    updateProduct,
+    getProductsByCategory,
+    getProductsByBrand,
+    searchProducts,
+    // getActiveProducts,
+    getProductsWithLowQty,
+    getProductsByCategoryAndBrand
+} from '../../services/ProductService';
 import Barcode from 'react-barcode';
 import { toPng } from 'html-to-image';
 import { saveAs } from 'file-saver';
@@ -39,6 +50,7 @@ const Products: React.FC = () => {
     const [editingProduct, setEditingProduct] = useState<Product | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<string>('All');
+    const [selectedBrand, setSelectedBrand] = useState<string>('All');
     const [statusFilter, setStatusFilter] = useState<string>('All');
     const [sortBy, setSortBy] = useState<'name' | 'price' | 'stock' | 'sales'>('name');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -80,11 +92,96 @@ const Products: React.FC = () => {
         setProducts(response.productDTOList);
     };
 
+    // Fetch products based on filters
+    const fetchFilteredProducts = async () => {
+        try {
+            // If searching, use search endpoint
+            if (searchTerm.trim() !== '') {
+                const response = await searchProducts(searchTerm);
+                setProducts(response.productDTOList || []);
+                return;
+            }
+
+            // If both category and brand are selected (not 'All'), use by-category-brand endpoint
+            if (selectedCategory !== 'All' && selectedBrand !== 'All') {
+                const categoryObj = categories.find(cat => cat.name === selectedCategory);
+                const brandObj = brands.find(br => br.brandName === selectedBrand);
+                if (categoryObj && brandObj) {
+                    const response = await getProductsByCategoryAndBrand(categoryObj.categoryId, brandObj.brandId);
+                    setProducts(response.productDTOList || []);
+                    return;
+                }
+            }
+
+            // If only category is selected
+            if (selectedCategory !== 'All') {
+                const categoryObj = categories.find(cat => cat.name === selectedCategory);
+                if (categoryObj) {
+                    const response = await getProductsByCategory(categoryObj.categoryId);
+                    setProducts(response.productDTOList || []);
+                    return;
+                }
+            }
+
+            // If only brand is selected
+            if (selectedBrand !== 'All') {
+                const brandObj = brands.find(br => br.brandName === selectedBrand);
+                if (brandObj) {
+                    const response = await getProductsByBrand(brandObj.brandId);
+                    setProducts(response.productDTOList || []);
+                    return;
+                }
+            }
+
+            // If status filter is set
+            if (statusFilter === 'Low Stock') {
+                const response = await getProductsWithLowQty();
+                setProducts(response.productDTOList || []);
+                return;
+            }
+            if (statusFilter === 'Out of Stock') {
+                // No direct endpoint, so get all and filter out of stock
+                const response = await getAllProducts();
+                setProducts((response.productDTOList || []).filter((p: any) => p.qty === 0));
+                return;
+            }
+            if (statusFilter === 'In Stock') {
+                // No direct endpoint, so get all and filter in stock
+                const response = await getAllProducts();
+                setProducts((response.productDTOList || []).filter((p: any) => p.qty > 0));
+                return;
+            }
+
+            // If statusFilter is 'All', get all or active products
+            if (statusFilter === 'All') {
+                const response = await getAllProducts();
+                setProducts(response.productDTOList || []);
+                return;
+            }
+        } catch (error) {
+            setProducts([]);
+        }
+    };
+
+    // Fetch categories and brands on mount
     useEffect(() => {
-        fetchProducts();
         fetchCategories();
         fetchBrands();
     }, []);
+
+    // Only fetch products when filters/search change, but not on mount (products is empty by default)
+    useEffect(() => {
+        // Only fetch if a filter/search is applied
+        if (
+            searchTerm.trim() !== '' ||
+            selectedCategory !== 'All' ||
+            selectedBrand !== 'All' ||
+            statusFilter !== 'All'
+        ) {
+            fetchFilteredProducts();
+        }
+        // eslint-disable-next-line
+    }, [searchTerm, selectedCategory, selectedBrand, statusFilter, categories, brands]);
 
     const getCategoryName = (categoryId: number) => {
         const category = categories.find(cat => cat.categoryId === categoryId);
@@ -98,45 +195,37 @@ const Products: React.FC = () => {
 
     const statusOptions = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
 
-    const getStatus = (stock: number): string => {
-        if (stock === 0) return 'Out of Stock';
-        if (stock < 10) return 'Low Stock';
-        return 'In Stock';
-    };
+    // const getStatus = (stock: number): string => {
+    //     if (stock === 0) return 'Out of Stock';
+    //     if (stock < 10) return 'Low Stock';
+    //     return 'In Stock';
+    // };
 
-    // Filter and sort products
-    const filteredAndSortedProducts = products
-        .filter(product => {
-            const matchesSearch = product.productName.toLowerCase().includes(searchTerm.toLowerCase());
-            const matchesCategory = selectedCategory === 'All' || getCategoryName(product.categoryId) === selectedCategory;
-            const matchesStatus = statusFilter === 'All' || getStatus(product.qty) === statusFilter;
-            return matchesSearch && matchesCategory && matchesStatus;
-        })
-        .sort((a, b) => {
-            let aValue, bValue;
-            switch (sortBy) {
-                case 'name':
-                    aValue = a.productName.toLowerCase();
-                    bValue = b.productName.toLowerCase();
-                    break;
-                case 'price':
-                    aValue = a.salePrice;
-                    bValue = b.salePrice;
-                    break;
-                case 'stock':
-                    aValue = a.qty;
-                    bValue = b.qty;
-                    break;
-                default:
-                    return 0;
-            }
-
-            if (sortOrder === 'asc') {
-                return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-            } else {
-                return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-            }
-        });
+    // Sort the products array
+    const filteredAndSortedProducts = [...products].sort((a, b) => {
+        let aValue, bValue;
+        switch (sortBy) {
+            case 'name':
+                aValue = a.productName.toLowerCase();
+                bValue = b.productName.toLowerCase();
+                break;
+            case 'price':
+                aValue = a.salePrice;
+                bValue = b.salePrice;
+                break;
+            case 'stock':
+                aValue = a.qty;
+                bValue = b.qty;
+                break;
+            default:
+                return 0;
+        }
+        if (sortOrder === 'asc') {
+            return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
+        } else {
+            return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
+        }
+    });
 
     const handleAddProduct = async () => {
         if (!newProduct.productName || !newProduct.categoryId || newProduct.salePrice <= 0 || newProduct.cost <= 0 || newProduct.qty <= 0) {
@@ -259,10 +348,10 @@ const Products: React.FC = () => {
         <div className="min-h-screen bg-white p-4 md:p-8">
             <div className="max-w-8xl mx-auto">
                 {/* Controls Section */}
-                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200" >
-                    <div className="flex flex-col lg:flex-row gap-4 items-center justify-between">
-                        {/* Search */}
-                        <div className=" flex-1 max-w-md">
+                <div className="bg-white shadow-sm rounded-lg p-6 mb-8 border border-gray-200">
+                    <div className="flex flex-col gap-4">
+                        {/* Search on top */}
+                        <div className="w-full max-w-md">
                             <input
                                 type="text"
                                 placeholder="Search products..."
@@ -271,8 +360,8 @@ const Products: React.FC = () => {
                                 className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
                             />
                         </div>
-                        {/* Filters */}
-                        <div className="flex gap-3 flex-wrap">
+                        {/* Filters below search */}
+                        <div className="flex gap-3 flex-wrap items-center">
                             <select
                                 value={selectedCategory}
                                 onChange={(e) => setSelectedCategory(e.target.value)}
@@ -281,6 +370,16 @@ const Products: React.FC = () => {
                                 <option value="All">All Categories</option>
                                 {categories.map(category => (
                                     <option key={category.categoryId} value={category.name}>{category.name}</option>
+                                ))}
+                            </select>
+                            <select
+                                value={selectedBrand}
+                                onChange={(e) => setSelectedBrand(e.target.value)}
+                                className="px-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
+                            >
+                                <option value="All">All Brands</option>
+                                {brands.map(brand => (
+                                    <option key={brand.brandId} value={brand.brandName}>{brand.brandName}</option>
                                 ))}
                             </select>
                             <select
@@ -330,6 +429,20 @@ const Products: React.FC = () => {
                                     Cards
                                 </button>
                             </div>
+                            {/* Fetch All Products Button */}
+                            <button
+                                onClick={async () => {
+                                    const response = await getAllProducts();
+                                    setProducts(response.productDTOList || []);
+                                    setSearchTerm('');
+                                    setSelectedCategory('All');
+                                    setSelectedBrand('All');
+                                    setStatusFilter('All');
+                                }}
+                                className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 font-medium ml-4"
+                            >
+                                View All Products
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -407,7 +520,7 @@ const Products: React.FC = () => {
             {/* Fixed Add Product Button */}
             <button
                 onClick={() => setIsModalOpen(true)}
-                className="fixed bottom-8 right-8 bg-white text-blue-700 border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all duration-200 z-50"
+                className="fixed bottom-8 right-8 bg-blue-600 text-white border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all duration-200 z-50"
                 style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
             >
                 Add Product
