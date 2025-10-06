@@ -158,15 +158,7 @@ const UserManagement: React.FC = () => {
             <h1 className="text-2xl font-semibold text-black">User Management</h1>
             <p className="text-sm text-gray-500 mt-1">Manage application users and their status</p>
           </div>
-          <div>
-            <button
-              onClick={handleAddUser}
-              className="bg-white text-blue-700 border border-blue-600 shadow-lg px-4 py-2 rounded-lg font-semibold hover:bg-blue-50 transition-all duration-150"
-              style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
-            >
-              Add New User
-            </button>
-          </div>
+          {/* Removed Add New User button here */}
         </div>
 
         {/* Table Card */}
@@ -250,6 +242,15 @@ const UserManagement: React.FC = () => {
           </div>
         </div>
       </div>
+
+      {/* Fixed Add User Button */}
+      <button
+        onClick={handleAddUser}
+        className="fixed bottom-10 right-10 bg-blue-600 text-white border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all duration-200 z-50"
+        style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
+      >
+        Add New User
+      </button>
 
       {isModalOpen && (
         <div className="fixed inset-0 backdrop-blur-sm bg-white/30 flex items-center justify-center z-20">

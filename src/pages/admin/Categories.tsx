@@ -153,7 +153,7 @@ const CategoryPage: React.FC = () => {
       {/* Fixed Add Category Button */}
       <button
         onClick={() => setIsModalOpen(true)}
-        className="fixed bottom-8 right-8 bg-white text-blue-700 border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-50 transition-all duration-200 z-50"
+        className="fixed bottom-8 right-8 bg-blue-600 text-white border border-blue-600 shadow-lg px-6 py-3 rounded-lg font-semibold text-base hover:bg-blue-700 transition-all duration-200 z-50"
         style={{ boxShadow: '0 2px 12px rgba(0,0,0,0.08)' }}
       >
         Add Category
