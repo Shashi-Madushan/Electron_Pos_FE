@@ -209,7 +209,7 @@ const Inventory: React.FC = () => {
                     <tr key={product.productId} className="hover:bg-gray-50">
                       <td className="px-6 py-4">
                         <div className="flex items-center">
-                          <div className="flex-shrink-0 h-10 w-10">
+                          {/* <div className="flex-shrink-0 h-10 w-10">
                             <img
                               className="h-10 w-10 rounded-lg object-cover"
                               src={product.image || `https://ui-avatars.com/api/?name=${encodeURIComponent(product.productName)}&background=f3f4f6&color=374151`}
@@ -219,7 +219,7 @@ const Inventory: React.FC = () => {
                                 target.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(product.productName)}&background=f3f4f6&color=374151`;
                               }}
                             />
-                          </div>
+                          </div> */}
                           <div className="ml-4">
                             <div className="text-sm font-medium text-gray-900">
                               {product.productName}

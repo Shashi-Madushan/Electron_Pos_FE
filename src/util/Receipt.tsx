@@ -15,7 +15,7 @@ const styles = `
 .receipt-root { display: flex; justify-content: center; padding: 16px; background: #f3f4f6; min-height: 50vh; }
 
 /***** RECEIPT *****/
-.receipt { width: 80mm; background: white; color: #111827; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
+.receipt { width: 80mm; min-width: 80mm !important; max-width: 80mm !important; background: white; color: #111827; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
 .receipt * { box-sizing: border-box; }
 
 .header { text-align: center; }
@@ -82,6 +82,7 @@ const styles = `
 @page { size: 78mm auto; margin: 0; }
 `;
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const formatMoney = (value: number, currency: Currency = "LKR"): string => {
   try {
     return new Intl.NumberFormat(undefined, {
@@ -173,14 +174,20 @@ export default function Receipt(props: ReceiptProps) {
         const receiptElement = document.querySelector('.receipt') as HTMLElement;
         if (!receiptElement) return;
 
+        receiptElement.style.width = '78mm';
+        receiptElement.style.minWidth = '78mm';
+
         const canvas = await html2canvas(receiptElement, {
           scale: 2,
-          backgroundColor: '#ffffff' // force pure white background
+          backgroundColor: '#ffffff', // force pure white background
+          width: 294, // 80mm in pixels at 96 DPI
+          windowWidth: 294,
         });
         const imgData = canvas.toDataURL('image/png');
 
         const pdfWidth = 78; // mm
-        const pdfHeight = canvas.height * pdfWidth / canvas.width;
+        //const heightRatio = Math.max(1.2, 1);
+        const pdfHeight = (canvas.height * pdfWidth / canvas.width);
         const pdf = new jsPDF({
           unit: 'mm',
           format: [pdfWidth, pdfHeight]
@@ -190,7 +197,12 @@ export default function Receipt(props: ReceiptProps) {
         pdf.setLineWidth(0.2);
         pdf.rect(0.5, 0.5, pdfWidth - 1, pdfHeight - 1);
 
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        // Adjust margins to ensure content fits
+        const margin = 1; // 1mm margin
+        const contentWidth = pdfWidth - (margin * 2);
+        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, pdfHeight - (margin * 2));
+
+        // pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
 
         // tell PDF to auto-print
         //(pdf as any).autoPrint();

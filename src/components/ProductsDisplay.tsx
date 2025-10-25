@@ -44,7 +44,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
             )}
             <div className="flex-1 flex flex-col justify-between z-10">
               <span className="font-bold text-xl text-gray-900 mb-1 truncate">{product.productName}</span>
-              <span className="text-xs text-gray-400 mb-3">ID: {product.productId}</span>
+              <span className="text-xs text-gray-400 mb-3">ID: {product.barcode}</span>
               <span className="text-blue-700 font-extrabold text-lg mb-2 tracking-wide drop-shadow-sm">
                 LKR {product.salePrice.toFixed(2)}
               </span>
@@ -94,7 +94,7 @@ const ProductsDisplay: React.FC<ProductsDisplayProps> = ({
         >
           <div className="flex flex-col flex-1 min-w-0">
             <span className="font-bold text-lg text-gray-900 truncate">{product.productName}</span>
-            <span className="text-xs text-gray-400">ID: {product.productId}</span>
+            <span className="text-xs text-gray-400">ID: {product.barcode}</span>
           </div>
           <span className="text-blue-700 font-extrabold text-base mx-6 tracking-wide">LKR {product.salePrice.toFixed(2)}</span>
           <span className={`text-xs px-3 py-1 rounded-full font-semibold mx-2 shadow-sm

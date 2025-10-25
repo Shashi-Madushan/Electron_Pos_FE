@@ -193,7 +193,7 @@ const Products: React.FC = () => {
         return brand ? brand.brandName : 'Unknown';
     };
 
-    const statusOptions = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
+    // const statusOptions = ['All', 'In Stock', 'Low Stock', 'Out of Stock'];
 
     // const getStatus = (stock: number): string => {
     //     if (stock === 0) return 'Out of Stock';
@@ -382,7 +382,7 @@ const Products: React.FC = () => {
                                     <option key={brand.brandId} value={brand.brandName}>{brand.brandName}</option>
                                 ))}
                             </select>
-                            <select
+                            {/* <select
                                 value={statusFilter}
                                 onChange={(e) => setStatusFilter(e.target.value)}
                                 className="px-4 py-2 bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-200 focus:border-blue-500 text-black"
@@ -390,7 +390,7 @@ const Products: React.FC = () => {
                                 {statusOptions.map(status => (
                                     <option key={status} value={status}>{status}</option>
                                 ))}
-                            </select>
+                            </select> */}
                             <select
                                 value={`${sortBy}-${sortOrder}`}
                                 onChange={(e) => {
