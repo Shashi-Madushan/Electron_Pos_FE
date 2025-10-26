@@ -45,15 +45,11 @@ const styles = `
 
 /***** PRINTING *****/
 @media print {
-  // body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  // .no-print { display: none !important; }
-  // .receipt-root { background: white; padding: 0; }
-  // .receipt { width: 78mm; box-shadow: none; padding: 10px; }
   html, body {
     margin: 0;
     padding: 0;
     background: white;
-    width: 72mm;             /* force print width */
+    width: 80mm;             /* force print width to 80mm */
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
@@ -65,7 +61,7 @@ const styles = `
   }
 
   .receipt {
-    width: 72mm !important;   /* force receipt width */
+    width: 80mm !important;   /* force receipt width */
     box-shadow: none !important;
     page-break-inside: avoid;
   }
@@ -79,7 +75,7 @@ const styles = `
   }
 }
 
-@page { size: 78mm auto; margin: 0; }
+@page { size: 80mm auto; margin: 0; }
 `;
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -111,7 +107,7 @@ export default function Receipt(props: ReceiptProps) {
     sale,
     currency = "LKR",
     autoPrint = false,
-    // onPrintComplete
+    onPrintComplete, // restored so callback is invoked after print
   } = props;
 
   const [user, setUser] = useState<User | null>(null);
@@ -171,67 +167,99 @@ export default function Receipt(props: ReceiptProps) {
   useEffect(() => {
     if (autoPrint) {
       async function printPDF() {
-        const receiptElement = document.querySelector('.receipt') as HTMLElement;
-        if (!receiptElement) return;
+        const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
+        if (!receiptEl) return;
 
-        receiptElement.style.width = '78mm';
-        receiptElement.style.minWidth = '78mm';
-
-        const canvas = await html2canvas(receiptElement, {
-          scale: 2,
-          backgroundColor: '#ffffff', // force pure white background
-          width: 294, // 80mm in pixels at 96 DPI
-          windowWidth: 294,
-        });
+        // render full receipt to canvas
+        const canvas = await html2canvas(receiptEl, { scale: 2, backgroundColor: '#ffffff' });
         const imgData = canvas.toDataURL('image/png');
 
-        const pdfWidth = 78; // mm
-        //const heightRatio = Math.max(1.2, 1);
-        const pdfHeight = (canvas.height * pdfWidth / canvas.width);
-        const pdf = new jsPDF({
-          unit: 'mm',
-          format: [pdfWidth, pdfHeight]
-        });
+        // desired receipt width in mm (thermal roll)
+        const pdfWidthMm = 80;
 
-        pdf.setDrawColor(200, 200, 200);  // light gray border
-        pdf.setLineWidth(0.2);
-        pdf.rect(0.5, 0.5, pdfWidth - 1, pdfHeight - 1);
+        const imgWidthPx = canvas.width;
+        const imgHeightPx = canvas.height;
+        const imgHeightMm = (imgHeightPx * pdfWidthMm) / imgWidthPx;
 
-        // Adjust margins to ensure content fits
-        const margin = 1; // 1mm margin
-        const contentWidth = pdfWidth - (margin * 2);
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, pdfHeight - (margin * 2));
+        // Prefer to create a single-page PDF sized to the actual content height (good for thermal roll printers)
+        const maxSinglePageMm = 2000; // safety cap (2 meters) to avoid crazy large single page; adjust if needed
 
-        // pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        let pdf: any;
 
-        // tell PDF to auto-print
-        //(pdf as any).autoPrint();
+        if (imgHeightMm > 0 && imgHeightMm <= maxSinglePageMm) {
+          // single-page PDF exactly sized to content
+          pdf = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: [pdfWidthMm, imgHeightMm],
+          });
+          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, imgHeightMm);
+        } else {
+          // Fallback: slice into multiple pages (each page height = pageHeightMm)
+          const pageHeightMm = 297; // use ~A4 height slices; thermal printers will print page-by-page
+          const pxPerMm = imgHeightPx / ((imgHeightPx * pdfWidthMm) / imgWidthPx); // simplifies to imgWidthPx/pdfWidthMm ? keep safe compute:
+          const pxPerMmCorrect = imgHeightPx / imgHeightMm;
+          const sliceHeightPx = Math.floor(pageHeightMm * pxPerMmCorrect);
 
-        // make a Blob URL
-        const pdfBlob = pdf.output('bloburl').toString();
+          const pdfFirst = new jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: [pdfWidthMm, pageHeightMm],
+          });
+          pdf = pdfFirst;
 
-        // create hidden iframe for printing
+          let remainingPx = imgHeightPx;
+          let offsetY = 0;
+          let first = true;
+
+          while (remainingPx > 0) {
+            const h = Math.min(sliceHeightPx, remainingPx);
+            const tmpCanvas = document.createElement('canvas');
+            tmpCanvas.width = imgWidthPx;
+            tmpCanvas.height = h;
+            const ctx = tmpCanvas.getContext('2d');
+            if (!ctx) break;
+            ctx.drawImage(canvas, 0, offsetY, imgWidthPx, h, 0, 0, imgWidthPx, h);
+            const sliceData = tmpCanvas.toDataURL('image/png');
+            const sliceHeightMm = (h * pdfWidthMm) / imgWidthPx;
+
+            if (!first) {
+              // add new page with same size
+              pdf.addPage([pdfWidthMm, pageHeightMm]);
+            }
+            pdf.addImage(sliceData, 'PNG', 0, 0, pdfWidthMm, sliceHeightMm);
+
+            first = false;
+            offsetY += h;
+            remainingPx -= h;
+          }
+        }
+
+        // produce blob URL and print via hidden iframe
+        const blobUrl = pdf.output('bloburl');
         const iframe = document.createElement('iframe');
         iframe.style.display = 'none';
-        iframe.src = pdfBlob;
+        iframe.src = blobUrl;
         document.body.appendChild(iframe);
 
-        // ...existing code...
         iframe.onload = () => {
-          const removeIframe = () => {
-            iframe.parentNode?.removeChild(iframe);
-            iframe.contentWindow?.removeEventListener('afterprint', removeIframe);
+          const win = iframe.contentWindow;
+          if (!win) return;
+          const removeAndCallback = () => {
+            try { document.body.removeChild(iframe); } catch {}
+            if (onPrintComplete) onPrintComplete();
           };
-          iframe.contentWindow?.addEventListener('afterprint', removeIframe);
-          iframe.contentWindow?.print();
+          // prefer onafterprint, fallback to timeout
+          win.onafterprint = removeAndCallback;
+          setTimeout(removeAndCallback, 3000);
+          try { win.focus(); win.print(); } catch (e) { removeAndCallback(); }
         };
-        // ...existing code...
       }
 
       const timer = setTimeout(printPDF, 1000);
       return () => clearTimeout(timer);
     }
-  }, [autoPrint]);
+  }, [autoPrint, onPrintComplete]);
 
   return (
     <div id="receipt-root" className="receipt-root">
