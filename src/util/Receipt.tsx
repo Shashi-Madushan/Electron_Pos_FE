@@ -7,75 +7,111 @@ import { getProductById } from "../services/ProductService";
 import type { Product } from "../types/Product";
 import type { BusinessInfo, Currency, Sale } from "../types/Sale";
 
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-
 const styles = `
 /* Center on screen */
-.receipt-root { display: flex; justify-content: center; padding: 16px; background: #f3f4f6; min-height: 50vh; }
+.receipt-root { display: flex; justify-content: center; align-items: center; padding: 0; background: #f3f4f6; min-height: 100vh; }
 
 /***** RECEIPT *****/
-.receipt { width: 80mm; min-width: 80mm !important; max-width: 80mm !important; background: white; color: #111827; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
+/* Make receipt fill available width but constrain to paper size */
+.receipt { width: 100%; max-width: 80mm !important; min-width: 80mm; background: white; color: #111827; padding: 2mm; box-shadow: 0 4px 18px rgba(0,0,0,.1); margin: 0; }
 .receipt * { box-sizing: border-box; }
 
-.header { text-align: center; }
-.header .title { font-weight: 700; font-size: 16px; }
-.header .sub { font-size: 11px; line-height: 1.25; color: #4b5563; }
+.header { text-align: center; margin-bottom: 4px; }
+.header .title { font-weight: 900; font-size: 24px; letter-spacing: 0.5px; margin-bottom: 2px; }
+.header .sub { font-size: 16px; line-height: 1.2; color: #374151; font-weight: 500; margin-bottom: 1px; }
 
-.meta { margin-top: 8px; font-size: 11px; }
-.row { display: flex; justify-content: space-between; gap: 8px; }
+.meta { margin-top: 4px; font-size: 16px; font-weight: 600; }
+.row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.sep { border-top: 1px dashed #d1d5db; margin: 8px 0; }
+.sep { border-top: 2px dashed #9ca3af; margin: 4px 0; }
 
 /***** ITEMS *****/
-.items { margin-top: 8px; }
-.items-head, .item-row { display: grid; grid-template-columns: 1fr 85px; align-items: start; gap: 6px; }
-.items-head { font-weight: 600; font-size: 11px; }
-.item-row { font-size: 11px; }
+.items { margin-top: 4px; }
+.items-head, .item-row { display: grid; grid-template-columns: 1fr 90px; align-items: start; gap: 10px; }
+.items-head { font-weight: 900; font-size: 16px; border-bottom: 2px solid #111827; padding-bottom: 3px; margin-bottom: 4px; }
+.item-row { font-size: 16px; margin-bottom: 4px; font-weight: 600; }
 .item-name { word-break: break-word; }
-.right { text-align: right !important; justify-self: end; }
+.item-name > div:first-child { font-weight: 700; margin-bottom: 1px; font-size: 17px; }
+.right { text-align: right !important; justify-self: end; font-weight: 700; }
 
 /***** TOTALS *****/
-.totals { font-size: 11px; }
-.totals .row { margin-top: 4px; }
-.totals .row.bold { font-weight: 700; font-size: 12px; }
+.totals { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.totals .row { margin-top: 3px; }
+.totals .row.bold { font-weight: 900; font-size: 20px; }
 
-.footer { text-align: center; margin-top: 10px; font-size: 11px; color: #6b7280; }
-.qr { display: flex; justify-content: center; margin-top: 8px; }
+.footer { text-align: center; margin-top: 6px; font-size: 16px; color: #374151; line-height: 1.3; font-weight: 600; }
+.qr { display: flex; justify-content: center; margin-top: 10px; }
 
 /***** PRINTING *****/
 @media print {
   html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white;
-    width: 80mm;             /* force print width to 80mm */
+    width: 80mm;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .receipt-root {
+    display: block !important;
     background: white !important;
     padding: 0 !important;
-    display: block !important;
+    margin: 0 !important;
+    min-height: auto !important;
   }
 
+  /* Force receipt to use full width of the print area */
   .receipt {
-    width: 80mm !important;   /* force receipt width */
+    width: 100% !important;
+    max-width: 76mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
     box-shadow: none !important;
-    page-break-inside: avoid;
   }
 
+  /* Allow content to flow naturally - don't force page breaks */
   .item-row {
-    page-break-inside: avoid; /* prevent splitting items */
+    page-break-inside: auto;
+  }
+
+  .header, .meta, .items-head {
+    page-break-after: avoid;
+  }
+
+  .totals, .footer {
+    page-break-before: avoid;
   }
 
   .no-print {
     display: none !important;
   }
+
+  /* Minimize margins for continuous flow */
+  * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .header { margin-bottom: 2px !important; }
+  .header .title { margin-bottom: 1px !important; }
+  .header .sub { margin-bottom: 0 !important; }
+  .meta { margin-top: 2px !important; }
+  .row { margin-bottom: 1px !important; }
+  .item-row { margin-bottom: 2px !important; }
+  .sep { margin: 2px 0 !important; }
+  .items { margin-top: 2px !important; }
+  .items-head { margin-bottom: 2px !important; padding-bottom: 2px !important; }
+  .totals { margin-top: 2px !important; }
+  .totals .row { margin-top: 1px !important; }
+  .footer { margin-top: 4px !important; }
 }
 
-@page { size: 80mm auto; margin: 0; }
+@page { 
+  size: 80mm auto; 
+  margin: 0 !important; 
+  padding: 0 !important;
+}
 `;
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -165,100 +201,84 @@ export default function Receipt(props: ReceiptProps) {
   }, [date]);
 
   useEffect(() => {
-    if (autoPrint) {
-      async function printPDF() {
-        const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
-        if (!receiptEl) return;
+    if (!autoPrint) return;
 
-        // render full receipt to canvas
-        const canvas = await html2canvas(receiptEl, { scale: 2, backgroundColor: '#ffffff' });
-        const imgData = canvas.toDataURL('image/png');
+    // Print using a hidden iframe (no new tab opened)
+    async function printViaIframe() {
+      const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
+      if (!receiptEl) return;
 
-        // desired receipt width in mm (thermal roll)
-        const pdfWidthMm = 80;
+      const printHtml = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width,initial-scale=1" />
+            <style>
+              ${styles}
+              /* ensure iframe print HTML has no extra side padding */
+              html,body { margin:0; padding:0; background:#fff; }
+              @page { size: 80mm auto; margin: 0; }
+              body { width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .receipt { box-shadow:none; padding:0; width:100%; max-width:78mm; }
+            </style>
+          </head>
+          <body>
+            ${receiptEl.outerHTML}
+          </body>
+        </html>
+      `;
 
-        const imgWidthPx = canvas.width;
-        const imgHeightPx = canvas.height;
-        const imgHeightMm = (imgHeightPx * pdfWidthMm) / imgWidthPx;
+      // create hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
 
-        // Prefer to create a single-page PDF sized to the actual content height (good for thermal roll printers)
-        const maxSinglePageMm = 2000; // safety cap (2 meters) to avoid crazy large single page; adjust if needed
-
-        let pdf: any;
-
-        if (imgHeightMm > 0 && imgHeightMm <= maxSinglePageMm) {
-          // single-page PDF exactly sized to content
-          pdf = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: [pdfWidthMm, imgHeightMm],
-          });
-          pdf.addImage(imgData, 'PNG', 0, 0, pdfWidthMm, imgHeightMm);
-        } else {
-          // Fallback: slice into multiple pages (each page height = pageHeightMm)
-          const pageHeightMm = 297; // use ~A4 height slices; thermal printers will print page-by-page
-          const pxPerMm = imgHeightPx / ((imgHeightPx * pdfWidthMm) / imgWidthPx); // simplifies to imgWidthPx/pdfWidthMm ? keep safe compute:
-          const pxPerMmCorrect = imgHeightPx / imgHeightMm;
-          const sliceHeightPx = Math.floor(pageHeightMm * pxPerMmCorrect);
-
-          const pdfFirst = new jsPDF({
-            orientation: 'p',
-            unit: 'mm',
-            format: [pdfWidthMm, pageHeightMm],
-          });
-          pdf = pdfFirst;
-
-          let remainingPx = imgHeightPx;
-          let offsetY = 0;
-          let first = true;
-
-          while (remainingPx > 0) {
-            const h = Math.min(sliceHeightPx, remainingPx);
-            const tmpCanvas = document.createElement('canvas');
-            tmpCanvas.width = imgWidthPx;
-            tmpCanvas.height = h;
-            const ctx = tmpCanvas.getContext('2d');
-            if (!ctx) break;
-            ctx.drawImage(canvas, 0, offsetY, imgWidthPx, h, 0, 0, imgWidthPx, h);
-            const sliceData = tmpCanvas.toDataURL('image/png');
-            const sliceHeightMm = (h * pdfWidthMm) / imgWidthPx;
-
-            if (!first) {
-              // add new page with same size
-              pdf.addPage([pdfWidthMm, pageHeightMm]);
-            }
-            pdf.addImage(sliceData, 'PNG', 0, 0, pdfWidthMm, sliceHeightMm);
-
-            first = false;
-            offsetY += h;
-            remainingPx -= h;
-          }
-        }
-
-        // produce blob URL and print via hidden iframe
-        const blobUrl = pdf.output('bloburl');
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = blobUrl;
-        document.body.appendChild(iframe);
-
-        iframe.onload = () => {
-          const win = iframe.contentWindow;
-          if (!win) return;
-          const removeAndCallback = () => {
-            try { document.body.removeChild(iframe); } catch {}
-            if (onPrintComplete) onPrintComplete();
-          };
-          // prefer onafterprint, fallback to timeout
-          win.onafterprint = removeAndCallback;
-          setTimeout(removeAndCallback, 3000);
-          try { win.focus(); win.print(); } catch (e) { removeAndCallback(); }
-        };
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) {
+        try { document.body.removeChild(iframe); } catch {}
+        if (onPrintComplete) onPrintComplete();
+        return;
       }
 
-      const timer = setTimeout(printPDF, 1000);
-      return () => clearTimeout(timer);
+      doc.open();
+      doc.write(printHtml);
+      doc.close();
+
+      const finish = () => {
+        try { document.body.removeChild(iframe); } catch {}
+        if (onPrintComplete) onPrintComplete();
+      };
+
+      const triggerPrint = () => {
+        try {
+          const w = iframe.contentWindow!;
+          (w as any).onafterprint = finish;
+          w.focus();
+          w.print();
+          // fallback in case onafterprint doesn't fire
+          setTimeout(finish, 4000);
+        } catch (e) {
+          finish();
+        }
+      };
+
+      // wait for load/render
+      if ((iframe.contentWindow?.document.readyState) === 'complete') {
+        setTimeout(triggerPrint, 250);
+      } else {
+        iframe.addEventListener('load', () => setTimeout(triggerPrint, 250));
+      }
     }
+
+    const timer = window.setTimeout(() => { void printViaIframe(); }, 1200);
+    return () => window.clearTimeout(timer);
   }, [autoPrint, onPrintComplete]);
 
   return (
@@ -299,7 +319,6 @@ export default function Receipt(props: ReceiptProps) {
             {/* <div className="right">Qty</div> */}
             <div className="right">Total</div>
           </div>
-          <div className="sep" />
           {sale.saleItems.map((it) => {
             const product = products[it.productId]; // fetched product
             const base = it.qty * it.price; // qty * price
@@ -309,7 +328,7 @@ export default function Receipt(props: ReceiptProps) {
               <div className="item-row mono" key={it.saleItemId}>
                 <div className="item-name">
                   <div>{product?.productName || `Product ${it.productId}`}</div>
-                  <div style={{ color: "#6b7280", fontSize: 10 }}>
+                  <div style={{ color: "#4b5563", fontSize: 14, fontWeight: 600 }}>
                     {formatMoney(it.price + (it.discount ?? 0), currency)} × {it.qty}
                     {discount > 0 && (
                       <>
