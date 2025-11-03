@@ -278,7 +278,11 @@ const AdminSalesPage: React.FC = () => {
             WebkitBackdropFilter: "blur(8px)"
           }}
         >
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 border border-blue-100 animate-fade-in">
+          {/* Modal: constrained to viewport height and prevents overflow */}
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 border border-blue-100 animate-fade-in flex flex-col"
+            style={{ maxHeight: '80vh', overflow: 'hidden' }}
+          >
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-3xl font-bold transition-colors"
               onClick={handleCloseModal}
@@ -286,45 +290,50 @@ const AdminSalesPage: React.FC = () => {
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-blue-700">Sale #{modalSaleId} Items</h2>
-            {itemsLoading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading items...</p>
-              </div>
-            ) : itemsError ? (
-              <div className="text-center py-8 text-red-500">{itemsError}</div>
-            ) : saleItems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border border-blue-100 rounded-lg">
-                  <thead className="bg-blue-50">
-                    <tr>
-                      <th className="p-3 text-left">#</th>
-                      <th className="p-3 text-left">Product</th>
-                      <th className="p-3 text-left">Barcode</th>
-                      <th className="p-3 text-left">Qty</th>
-                      <th className="p-3 text-left">Price</th>
-                      <th className="p-3 text-left">Total Price</th>
-                      <th className="p-3 text-left">Discount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {saleItems.map((item, idx) => (
-                      <tr key={item.saleItemId} className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}>
-                        <td className="p-3">{idx + 1}</td>
-                        <td className="p-3">{item.productName}</td>
-                        <td className="p-3">{item.barcode}</td>
-                        <td className="p-3">{item.qty}</td>
-                        <td className="p-3">LKR {item.price.toFixed(2)}</td>
-                        <td className="p-3">LKR {item.totalPrice.toFixed(2)}</td>
-                        <td className="p-3">LKR {item.discount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">Sale #{modalSaleId} Items</h2>
+
+            {/* Scrollable body: will scroll if content exceeds available space */}
+            <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+              {itemsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading items...</p>
+                </div>
+              ) : itemsError ? (
+                <div className="text-center py-8 text-red-500">{itemsError}</div>
+              ) : saleItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
+              ) : (
+                <div className="overflow-auto" style={{ maxHeight: '60vh' }}>
+                  <table className="w-full border border-blue-100 rounded-lg">
+                    {/* sticky header so it remains on top when scrolling */}
+                    <thead className="bg-blue-50 sticky top-0 z-20">
+                       <tr>
+                        <th className="p-3 text-left">#</th>
+                        <th className="p-3 text-left">Product</th>
+                        <th className="p-3 text-left">Barcode</th>
+                        <th className="p-3 text-left">Qty</th>
+                        <th className="p-3 text-left">Price</th>
+                        <th className="p-3 text-left">Total Price</th>
+                        <th className="p-3 text-left">Discount</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {saleItems.map((item, idx) => (
+                         <tr key={item.saleItemId} className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}>
+                           <td className="p-3">{idx + 1}</td>
+                           <td className="p-3">{item.productName}</td>
+                           <td className="p-3">{item.barcode}</td>
+                           <td className="p-3">{item.qty}</td>
+                           <td className="p-3">LKR {item.price.toFixed(2)}</td>
+                           <td className="p-3">LKR {item.totalPrice.toFixed(2)}</td>
+                           <td className="p-3">LKR {item.discount.toFixed(2)}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               )}
+             </div>
           </div>
         </div>
       )}
