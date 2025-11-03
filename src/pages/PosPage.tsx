@@ -53,6 +53,7 @@ const PosPage = () => {
   const barcodeInputRef = useRef<HTMLInputElement>(null!);
   const [showReceipt, setShowReceipt] = useState(false);
   const [saleData, setSaleData] = useState<Sale | null>(null);
+  const [isCheckoutDisabled, setIsCheckoutDisabled] = useState(false);
   const [orderTotals, setOrderTotals] = useState<OrderTotals>({
     originalTotal: 0,
     itemDiscounts: 0,
@@ -145,6 +146,12 @@ const PosPage = () => {
 
     fetchFilteredProducts();
   }, [selectedCategory, selectedBrand, search]);
+
+  useEffect(() => {
+    if (orderItems.length > 0) {
+      setIsCheckoutDisabled(false);
+    }
+  }, [orderItems.length]);
 
   const handleUpdateQuantity = (productId: string, change: number) => {
     setOrderItems(items =>
@@ -264,6 +271,8 @@ const PosPage = () => {
 
   // Updated handleCheckout function with product refresh
   const handleCheckout = async () => {
+    if (isCheckoutDisabled) return;
+    setIsCheckoutDisabled(true);
     const saleDTO = prepareSaleDTO();
     console.log('Prepared SaleDTO:', saleDTO);
     try {
@@ -287,9 +296,12 @@ const PosPage = () => {
         setShowReceipt(true);
         setOrderItems([]); // Clear the order items
         await refreshProducts(); // Refresh products after checkout
+      } else {
+        setIsCheckoutDisabled(false);
       }
     } catch (error) {
       console.error('Error during checkout:', error);
+      setIsCheckoutDisabled(false);
     }
   };
 
@@ -365,18 +377,20 @@ const PosPage = () => {
           </div>
 
           {/* Checkout Section */}
-          <CheckoutSection
-            orderItems={orderItems}
-            products={products}
-            paymentMethod={paymentMethod}
-            orderTotals={orderTotals}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
-            onPaymentMethodChange={setPaymentMethod}
-            onCheckout={handleCheckout}
-            onClear={() => setOrderItems([])}
-            onOrderTotalsChange={setOrderTotals}
-          />
+          <div className={`transition-opacity ${isCheckoutDisabled ? 'pointer-events-none opacity-60' : ''}`}>
+            <CheckoutSection
+              orderItems={orderItems}
+              products={products}
+              paymentMethod={paymentMethod}
+              orderTotals={orderTotals}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onPaymentMethodChange={setPaymentMethod}
+              onCheckout={handleCheckout}
+              onClear={() => setOrderItems([])}
+              onOrderTotalsChange={setOrderTotals}
+            />
+          </div>
 
           {/* Modals */}
           {isQuantityModalOpen && selectedProduct && (
