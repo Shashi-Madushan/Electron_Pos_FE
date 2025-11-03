@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import Receipt from '../util/Receipt';
+import Receipt from '../util/Reciept2';
 import type { Sale } from '../types/Sale';
 
 interface ReceiptModalProps {
