@@ -1,79 +1,111 @@
 import { useEffect, useMemo } from "react";
 import type { BusinessInfo, Currency, Sale } from "../types/Sale";
 
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
-
 const styles = `
 /* Center on screen */
-.receipt-root { display: flex; justify-content: center; padding: 16px; background: #f3f4f6; min-height: 50vh; }
+.receipt-root { display: flex; justify-content: center; align-items: center; padding: 0; background: #f3f4f6; min-height: 100vh; }
 
 /***** RECEIPT *****/
-.receipt { width: 80mm; min-width: 80mm !important; max-width: 80mm !important; background: white; color: #111827; padding: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.1); }
+/* Make receipt fill available width but constrain to paper size */
+.receipt { width: 100%; max-width: 80mm !important; min-width: 80mm; background: white; color: #111827; padding: 2mm; box-shadow: 0 4px 18px rgba(0,0,0,.1); margin: 0; }
 .receipt * { box-sizing: border-box; }
 
-.header { text-align: center; }
-.header .title { font-weight: 700; font-size: 16px; }
-.header .sub { font-size: 11px; line-height: 1.25; color: #4b5563; }
+.header { text-align: center; margin-bottom: 4px; }
+.header .title { font-weight: 900; font-size: 24px; letter-spacing: 0.5px; margin-bottom: 2px; }
+.header .sub { font-size: 16px; line-height: 1.2; color: #374151; font-weight: 500; margin-bottom: 1px; }
 
-.meta { margin-top: 8px; font-size: 11px; }
-.row { display: flex; justify-content: space-between; gap: 8px; }
+.meta { margin-top: 4px; font-size: 16px; font-weight: 600; }
+.row { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 2px; }
 .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-.sep { border-top: 1px dashed #d1d5db; margin: 8px 0; }
+.sep { border-top: 2px dashed #9ca3af; margin: 4px 0; }
 
 /***** ITEMS *****/
-.items { margin-top: 8px; }
-.items-head, .item-row { display: grid; grid-template-columns: 1fr 85px; align-items: start; gap: 6px; }
-.items-head { font-weight: 600; font-size: 11px; }
-.item-row { font-size: 11px; }
+.items { margin-top: 4px; }
+.items-head, .item-row { display: grid; grid-template-columns: 1fr 90px; align-items: start; gap: 10px; }
+.items-head { font-weight: 900; font-size: 16px; border-bottom: 2px solid #111827; padding-bottom: 3px; margin-bottom: 4px; }
+.item-row { font-size: 16px; margin-bottom: 4px; font-weight: 600; }
 .item-name { word-break: break-word; }
-.right { text-align: right !important; justify-self: end; }
+.item-name > div:first-child { font-weight: 700; margin-bottom: 1px; font-size: 17px; }
+.right { text-align: right !important; justify-self: end; font-weight: 700; }
 
 /***** TOTALS *****/
-.totals { font-size: 11px; }
-.totals .row { margin-top: 4px; }
-.totals .row.bold { font-weight: 700; font-size: 12px; }
+.totals { font-size: 16px; font-weight: 600; margin-top: 4px; }
+.totals .row { margin-top: 3px; }
+.totals .row.bold { font-weight: 900; font-size: 20px; }
 
-.footer { text-align: center; margin-top: 10px; font-size: 11px; color: #6b7280; }
-.qr { display: flex; justify-content: center; margin-top: 8px; }
+.footer { text-align: center; margin-top: 6px; font-size: 16px; color: #374151; line-height: 1.3; font-weight: 600; }
+.qr { display: flex; justify-content: center; margin-top: 10px; }
 
 /***** PRINTING *****/
 @media print {
-  // body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-  // .no-print { display: none !important; }
-  // .receipt-root { background: white; padding: 0; }
-  // .receipt { width: 78mm; box-shadow: none; padding: 10px; }
   html, body {
-    margin: 0;
-    padding: 0;
+    margin: 0 !important;
+    padding: 0 !important;
     background: white;
-    width: 72mm;             /* force print width */
+    width: 80mm;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
   .receipt-root {
+    display: block !important;
     background: white !important;
     padding: 0 !important;
-    display: block !important;
+    margin: 0 !important;
+    min-height: auto !important;
   }
 
+  /* Force receipt to use full width of the print area */
   .receipt {
-    width: 72mm !important;   /* force receipt width */
+    width: 100% !important;
+    max-width: 76mm !important;
+    margin: 0 !important;
+    padding: 2mm !important;
     box-shadow: none !important;
-    page-break-inside: avoid;
   }
 
+  /* Allow content to flow naturally - don't force page breaks */
   .item-row {
-    page-break-inside: avoid; /* prevent splitting items */
+    page-break-inside: auto;
+  }
+
+  .header, .meta, .items-head {
+    page-break-after: avoid;
+  }
+
+  .totals, .footer {
+    page-break-before: avoid;
   }
 
   .no-print {
     display: none !important;
   }
+
+  /* Minimize margins for continuous flow */
+  * {
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+  }
+
+  .header { margin-bottom: 2px !important; }
+  .header .title { margin-bottom: 1px !important; }
+  .header .sub { margin-bottom: 0 !important; }
+  .meta { margin-top: 2px !important; }
+  .row { margin-bottom: 1px !important; }
+  .item-row { margin-bottom: 2px !important; }
+  .sep { margin: 2px 0 !important; }
+  .items { margin-top: 2px !important; }
+  .items-head { margin-bottom: 2px !important; padding-bottom: 2px !important; }
+  .totals { margin-top: 2px !important; }
+  .totals .row { margin-top: 1px !important; }
+  .footer { margin-top: 4px !important; }
 }
 
-@page { size: 78mm auto; margin: 0; }
+@page { 
+  size: 80mm auto; 
+  margin: 0 !important; 
+  padding: 0 !important;
+}
 `;
 
 // eslint-disable-next-line react-refresh/only-export-components
@@ -105,7 +137,7 @@ export default function Receipt(props: ReceiptProps) {
     sale,
     currency = "LKR",
     autoPrint = false,
-    // onPrintComplete
+    onPrintComplete // <-- enable this callback
   } = props;
 
   // No external fetches: use data passed in `sale` directly.
@@ -131,67 +163,85 @@ export default function Receipt(props: ReceiptProps) {
   }, [date]);
 
   useEffect(() => {
-    if (autoPrint) {
-      async function printPDF() {
-        const receiptElement = document.querySelector('.receipt') as HTMLElement;
-        if (!receiptElement) return;
+    if (!autoPrint) return;
 
-        receiptElement.style.width = '78mm';
-        receiptElement.style.minWidth = '78mm';
+    // Print using a hidden iframe (matches Receipt.tsx approach)
+    async function printViaIframe() {
+      const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
+      if (!receiptEl) return;
 
-        const canvas = await html2canvas(receiptElement, {
-          scale: 2,
-          backgroundColor: '#ffffff', // force pure white background
-          width: 294, // 80mm in pixels at 96 DPI
-          windowWidth: 294,
-        });
-        const imgData = canvas.toDataURL('image/png');
+      const printHtml = `
+        <!doctype html>
+        <html>
+          <head>
+            <meta charset="utf-8" />
+            <meta name="viewport" content="width=device-width,initial-scale=1" />
+            <style>
+              ${styles}
+              /* ensure iframe print HTML has no extra side padding */
+              html,body { margin:0; padding:0; background:#fff; }
+              @page { size: 80mm auto; margin: 0; }
+              body { width: 100%; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+              .receipt { box-shadow:none; padding:0; width:100%; max-width:78mm; }
+            </style>
+          </head>
+          <body>
+            ${receiptEl.outerHTML}
+          </body>
+        </html>
+      `;
 
-        const pdfWidth = 78; // mm
-        //const heightRatio = Math.max(1.2, 1);
-        const pdfHeight = (canvas.height * pdfWidth / canvas.width);
-        const pdf = new jsPDF({
-          unit: 'mm',
-          format: [pdfWidth, pdfHeight]
-        });
+      // create hidden iframe
+      const iframe = document.createElement('iframe');
+      iframe.style.position = 'fixed';
+      iframe.style.right = '0';
+      iframe.style.bottom = '0';
+      iframe.style.width = '0';
+      iframe.style.height = '0';
+      iframe.style.border = '0';
+      iframe.style.visibility = 'hidden';
+      document.body.appendChild(iframe);
 
-        pdf.setDrawColor(200, 200, 200);  // light gray border
-        pdf.setLineWidth(0.2);
-        pdf.rect(0.5, 0.5, pdfWidth - 1, pdfHeight - 1);
-
-        // Adjust margins to ensure content fits
-        const margin = 1; // 1mm margin
-        const contentWidth = pdfWidth - (margin * 2);
-        pdf.addImage(imgData, 'PNG', margin, margin, contentWidth, pdfHeight - (margin * 2));
-
-        // pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-
-        // tell PDF to auto-print
-        //(pdf as any).autoPrint();
-
-        // make a Blob URL
-        const pdfBlob = pdf.output('bloburl').toString();
-
-        // create hidden iframe for printing
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        iframe.src = pdfBlob;
-        document.body.appendChild(iframe);
-
-        iframe.onload = () => {
-          const removeIframe = () => {
-            iframe.parentNode?.removeChild(iframe);
-            iframe.contentWindow?.removeEventListener('afterprint', removeIframe);
-          };
-          iframe.contentWindow?.addEventListener('afterprint', removeIframe);
-          iframe.contentWindow?.print();
-        };
+      const doc = iframe.contentDocument || iframe.contentWindow?.document;
+      if (!doc) {
+        try { document.body.removeChild(iframe); } catch {}
+        if (onPrintComplete) onPrintComplete();
+        return;
       }
 
-      const timer = setTimeout(printPDF, 1000);
-      return () => clearTimeout(timer);
+      doc.open();
+      doc.write(printHtml);
+      doc.close();
+
+      const finish = () => {
+        try { document.body.removeChild(iframe); } catch {}
+        if (onPrintComplete) onPrintComplete();
+      };
+
+      const triggerPrint = () => {
+        try {
+          const w = iframe.contentWindow!;
+          (w as any).onafterprint = finish;
+          w.focus();
+          w.print();
+          // fallback in case onafterprint doesn't fire
+          setTimeout(finish, 4000);
+        } catch (e) {
+          finish();
+        }
+      };
+
+      // wait for load/render
+      if ((iframe.contentWindow?.document.readyState) === 'complete') {
+        setTimeout(triggerPrint, 250);
+      } else {
+        iframe.addEventListener('load', () => setTimeout(triggerPrint, 250));
+      }
     }
-  }, [autoPrint]);
+
+    const timer = window.setTimeout(() => { void printViaIframe(); }, 1200);
+    return () => window.clearTimeout(timer);
+  }, [autoPrint, onPrintComplete]);
 
   return (
     <div id="receipt-root" className="receipt-root">

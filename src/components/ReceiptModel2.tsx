@@ -18,11 +18,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
     };
 
     useEffect(() => {
-        const timer = setTimeout(() => {
-            onClose();
-        }, 1000);
-
-        return () => clearTimeout(timer); // cleanup
+        // removed auto-close timer — modal closes via onPrintComplete callback from Receipt
     }, [onClose]);
 
     useEffect(() => {
