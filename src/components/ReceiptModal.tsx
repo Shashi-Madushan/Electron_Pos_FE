@@ -22,7 +22,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
             onClose();
         }, 10000);
 
-        return () => clearTimeout(timer); // cleanup
+        return () => clearTimeout(timer);
     }, [onClose]);
 
     useEffect(() => {

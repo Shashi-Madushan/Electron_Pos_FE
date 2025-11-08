@@ -170,22 +170,22 @@ export default function Receipt(props: ReceiptProps) {
         const productPromises = sale.saleItems.map(async (item) => {
           const product = await getProductById(item.productId);
           console.log("Product Data:", product);
-          return [item.productId, product.productDTO];
+          return [item.productId, product.productDTO] as const;
         });
 
         const productResults = await Promise.all(productPromises);
-        const productMap = Object.fromEntries(productResults);
+        const productMap = Object.fromEntries(productResults) as Record<string, Product>;
         setProducts(productMap);
       } catch (error) {
         console.error("Error loading receipt data:", error);
       }
     };
 
-    loadData();
+    void loadData();
 
     setItemCount(sale.saleItems.length);
     console.log("Sale Data:", sale);
-  }, []);
+  }, [sale]);
 
   const date = sale.date || new Date();
 
@@ -204,7 +204,7 @@ export default function Receipt(props: ReceiptProps) {
     if (!autoPrint) return;
 
     // Print using a hidden iframe (no new tab opened)
-    async function printViaIframe() {
+    const printViaIframe = async () => {
       const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
       if (!receiptEl) return;
 
@@ -242,7 +242,9 @@ export default function Receipt(props: ReceiptProps) {
 
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (!doc) {
-        try { document.body.removeChild(iframe); } catch {}
+        try { document.body.removeChild(iframe); } catch {
+          // ignore cleanup errors
+        }
         if (onPrintComplete) onPrintComplete();
         return;
       }
@@ -252,19 +254,25 @@ export default function Receipt(props: ReceiptProps) {
       doc.close();
 
       const finish = () => {
-        try { document.body.removeChild(iframe); } catch {}
+        try { document.body.removeChild(iframe); } catch {
+          // ignore cleanup errors
+        }
         if (onPrintComplete) onPrintComplete();
       };
 
       const triggerPrint = () => {
         try {
-          const w = iframe.contentWindow!;
-          (w as any).onafterprint = finish;
+          const w = iframe.contentWindow;
+          if (!w) {
+            finish();
+            return;
+          }
+          (w as Window & { onafterprint?: () => void }).onafterprint = finish;
           w.focus();
           w.print();
           // fallback in case onafterprint doesn't fire
           setTimeout(finish, 4000);
-        } catch (e) {
+        } catch {
           finish();
         }
       };
@@ -275,7 +283,7 @@ export default function Receipt(props: ReceiptProps) {
       } else {
         iframe.addEventListener('load', () => setTimeout(triggerPrint, 250));
       }
-    }
+    };
 
     const timer = window.setTimeout(() => { void printViaIframe(); }, 1200);
     return () => window.clearTimeout(timer);

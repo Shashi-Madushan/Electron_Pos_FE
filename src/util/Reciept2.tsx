@@ -1,6 +1,11 @@
 import { useEffect, useMemo } from "react";
 import type { BusinessInfo, Currency, Sale } from "../types/Sale";
+//////////////////////////////////////////////////////////////////////////////////
 
+// Import PDF libraries to include in bundle
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
+//////////////////////////////////////////////////////////////////////////////////////
 const styles = `
 /* Center on screen */
 .receipt-root { display: flex; justify-content: center; align-items: center; padding: 0; background: #f3f4f6; min-height: 100vh; }
@@ -137,14 +142,17 @@ export default function Receipt(props: ReceiptProps) {
     sale,
     currency = "LKR",
     autoPrint = false,
-    onPrintComplete // <-- enable this callback
+    onPrintComplete
   } = props;
 
   // No external fetches: use data passed in `sale` directly.
   // Derived values computed from sale prop:
   const itemCount = useMemo(() => sale.saleItems?.length ?? 0, [sale.saleItems]);
   const originalTotal = useMemo(() => {
-    return (sale.saleItems ?? []).reduce((s, it: any) => s + (it.totalPrice ?? ((it.price ?? 0) * (it.qty ?? 0))), 0);
+    return (sale.saleItems ?? []).reduce((s, it) => {
+      const itemTotal = (it.price ?? 0) * (it.qty ?? 0);
+      return s + itemTotal;
+    }, 0);
   }, [sale.saleItems]);
   const itemDiscounts = sale.totalDiscount ?? 0;
   const subtotal = originalTotal - itemDiscounts;
@@ -166,7 +174,7 @@ export default function Receipt(props: ReceiptProps) {
     if (!autoPrint) return;
 
     // Print using a hidden iframe (matches Receipt.tsx approach)
-    async function printViaIframe() {
+    const printViaIframe = async () => {
       const receiptEl = document.querySelector('.receipt') as HTMLElement | null;
       if (!receiptEl) return;
 
@@ -204,7 +212,9 @@ export default function Receipt(props: ReceiptProps) {
 
       const doc = iframe.contentDocument || iframe.contentWindow?.document;
       if (!doc) {
-        try { document.body.removeChild(iframe); } catch {}
+        try { document.body.removeChild(iframe); } catch {
+          // ignore cleanup errors
+        }
         if (onPrintComplete) onPrintComplete();
         return;
       }
@@ -214,19 +224,25 @@ export default function Receipt(props: ReceiptProps) {
       doc.close();
 
       const finish = () => {
-        try { document.body.removeChild(iframe); } catch {}
+        try { document.body.removeChild(iframe); } catch {
+          // ignore cleanup errors
+        }
         if (onPrintComplete) onPrintComplete();
       };
 
       const triggerPrint = () => {
         try {
-          const w = iframe.contentWindow!;
-          (w as any).onafterprint = finish;
+          const w = iframe.contentWindow;
+          if (!w) {
+            finish();
+            return;
+          }
+          (w as Window & { onafterprint?: () => void }).onafterprint = finish;
           w.focus();
           w.print();
           // fallback in case onafterprint doesn't fire
           setTimeout(finish, 4000);
-        } catch (e) {
+        } catch {
           finish();
         }
       };
@@ -237,12 +253,16 @@ export default function Receipt(props: ReceiptProps) {
       } else {
         iframe.addEventListener('load', () => setTimeout(triggerPrint, 250));
       }
-    }
+    };
 
     const timer = window.setTimeout(() => { void printViaIframe(); }, 1200);
     return () => window.clearTimeout(timer);
   }, [autoPrint, onPrintComplete]);
+  ///////////////////////////////////////////////////////////////////////////////
 
+  // Note: PDF libraries imported but not used - iframe printing is active
+  console.log('PDF libs loaded:', jsPDF, html2canvas);
+//////////////////////////////////////////////////////////////////////////////////////
   return (
     <div id="receipt-root" className="receipt-root">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
@@ -274,20 +294,19 @@ export default function Receipt(props: ReceiptProps) {
         <div className="items">
           <div className="items-head mono">
             <div>Item</div>
-            {/* <div className="right">Qty</div> */}
             <div className="right">Total</div>
           </div>
           <div className="sep" />
-          {sale.saleItems.map((it: any) => {
+          {sale.saleItems.map((it) => {
              const base = (it.qty ?? 0) * (it.price ?? 0);
              const discount = it.discount ?? 0;
-             const displayName = it.productName ?? it.barcode ?? `Item ${it.saleItemId}`;
-             const lineTotal = it.totalPrice ?? base - (discount * (it.qty ?? 0));
+             const displayName = `Product ${it.productId}`;
+             const lineTotal = base - (discount * (it.qty ?? 0));
              return (
                <div className="item-row mono" key={it.saleItemId}>
                  <div className="item-name">
                    <div>{displayName}</div>
-                   <div style={{ color: "#6b7280", fontSize: 10 }}>
+                   <div style={{ color: "#6b7280", fontSize: 14, fontWeight: 600 }}>
                      {formatMoney(it.price ?? 0, currency)} × {it.qty ?? 0}
                      {discount > 0 && (
                        <>
@@ -297,7 +316,6 @@ export default function Receipt(props: ReceiptProps) {
                      )}
                    </div>
                  </div>
-                 {/* <div className="right">{it.qty}</div> */}
                  <div className="right">{formatMoney(lineTotal, currency)}</div>
                </div>
              );

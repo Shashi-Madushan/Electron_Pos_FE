@@ -23,7 +23,7 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
 
     useEffect(() => {
         console.log("sale data in receipt modal:", sale);
-    }, []);
+    }, [sale]);
 
     return (
         <div style={{
