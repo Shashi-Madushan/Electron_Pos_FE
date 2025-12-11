@@ -30,6 +30,8 @@ export interface Sale {
     subtotal: number;
     orderDiscountPercentage: number;
     orderDiscount: number;
+    paymentAmount: number;
+    balance: number;  
 }
 export interface SaleItemDTO {
   saleItemId?: number | null;
@@ -55,5 +57,7 @@ export interface SaleDTO {
   subtotal: number;
   orderDiscountPercentage: number;
   orderDiscount: number;
+  paymentAmount: number;
+  balance: number;
 }
 

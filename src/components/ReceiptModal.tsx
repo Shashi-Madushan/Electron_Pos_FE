@@ -20,10 +20,14 @@ const ReceiptModal: React.FC<ReceiptModalProps> = ({ isOpen, onClose, sale }) =>
     useEffect(() => {
         const timer = setTimeout(() => {
             onClose();
-        }, 1000);
+        }, 10000);
 
-        return () => clearTimeout(timer); // cleanup
+        return () => clearTimeout(timer);
     }, [onClose]);
+
+    useEffect(() => {
+        console.log("sale data in receipt modal:", sale);
+    }, [sale]);
 
     return (
         <div style={{

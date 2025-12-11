@@ -65,8 +65,8 @@ const LoginPage = () => {
                                 <Package className="w-8 h-8 text-white" />
                             </div>
                         </div>
-                        <h1 className="text-2xl font-bold text-white mb-2">POS</h1>
-                        <p className="text-blue-100 text-sm">Stock Management System</p>
+                     <h1 className="text-2xl font-bold text-white mb-2">N I テンポ japan shop</h1>
+                        <p className="text-blue-100 text-sm">Point Of Sales System</p>
                     </div>
 
                     {/* Form Content */}

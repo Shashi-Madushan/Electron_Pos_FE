@@ -31,12 +31,17 @@ const AdminProduct: React.FC<AdminProductProps> = ({
     getCategoryName,
     getBrandName,
     onEdit,
-    onDelete,
     onGenerateBarcode,
     onToggleActive,
     isSelected,
     viewMode
 }) => {
+    const handleDeactivateClick = () => {
+        if (confirm('Are you sure you want to deactivate this product?')) {
+            onToggleActive(product);
+        }
+    };
+
     if (viewMode === 'table') {
         return (
             <tr className={`border-b border-gray-100 transition-all duration-200 hover:bg-gray-50/50
@@ -115,12 +120,12 @@ const AdminProduct: React.FC<AdminProductProps> = ({
                             Edit
                         </button>
                         <button
-                            onClick={() => onDelete(product.productId)}
-                            title="Delete Product"
+                            onClick={handleDeactivateClick}
+                            title="Deactivate Product"
                             className="flex items-center justify-center gap-1 text-red-600 px-2 py-1 text-xs font-medium border border-red-100 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-red-300"
                         >
                             <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                             Delete
                         </button>
@@ -133,22 +138,6 @@ const AdminProduct: React.FC<AdminProductProps> = ({
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
                             </svg>
                             Barcode
-                        </button>
-                        <button
-                            onClick={() => onToggleActive(product)}
-                            title={product.isActive ? "Deactivate Product" : "Activate Product"}
-                            className={`flex items-center justify-center gap-1 px-2 py-1 text-xs font-medium border rounded focus:outline-none focus:ring-2 ${
-                                product.isActive
-                                ? 'text-red-600 border-red-100 hover:bg-red-50 focus:ring-red-300'
-                                : 'text-green-600 border-green-100 hover:bg-green-50 focus:ring-green-300'
-                            }`}
-                        >
-                            <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d={product.isActive 
-                                    ? "M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"
-                                    : "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"} />
-                            </svg>
-                            {product.isActive ? 'Deactivate' : 'Activate'}
                         </button>
                     </div>
                 </td>
@@ -224,23 +213,13 @@ const AdminProduct: React.FC<AdminProductProps> = ({
                     Edit
                 </button>
                 <button
-                    onClick={() => onDelete(product.productId)}
+                    onClick={handleDeactivateClick}
                     className="flex-1 inline-flex items-center justify-center text-red-600 px-2 py-1 text-xs font-medium border border-red-100 rounded hover:bg-red-50"
                 >
                     <svg className="w-3.5 h-3.5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
                     Delete
-                </button>
-                <button
-                    onClick={() => onToggleActive(product)}
-                    className={`flex-1 inline-flex items-center justify-center px-2 py-1 text-xs font-medium border rounded ${
-                        product.isActive
-                        ? 'text-red-600 border-red-100 hover:bg-red-50'
-                        : 'text-green-600 border-green-100 hover:bg-green-50'
-                    }`}
-                >
-                    {product.isActive ? 'Deactivate' : 'Activate'}
                 </button>
             </div>
             <button

@@ -26,6 +26,8 @@ export const mapSaleDTOToSale = (dto: SaleDTO): Sale => {
         itemDiscounts: dto.itemDiscounts,
         subtotal: dto.subtotal,
         orderDiscountPercentage: dto.orderDiscountPercentage,
-        orderDiscount: dto.orderDiscount
+        orderDiscount: dto.orderDiscount,
+        paymentAmount: dto.paymentAmount,
+        balance: dto.balance
     };
 };

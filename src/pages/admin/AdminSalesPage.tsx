@@ -8,6 +8,7 @@ import {
   deleteSale
 } from '../../services/SaleService';
 import { getAllSaleItemsBySaleId } from '../../services/SaleItemService';
+import ReceiptModal from '../../components/ReceiptModel2';
 
 interface Sale {
   saleId: number;
@@ -18,6 +19,8 @@ interface Sale {
   userId: number;
   customerId: number | null;
   saleItems: null;
+  paymentAmount?: number; // added optional
+  balance?: number;       // added optional
 }
 
 interface SaleItem {
@@ -44,6 +47,9 @@ const AdminSalesPage: React.FC = () => {
   const [rangeType, setRangeType] = useState<'all' | 'today' | 'lastweek' | 'lastmonth' | 'custom'>('today');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  // We'll use modalSaleId (already present) to fetch sale in ReceiptModal2
 
   useEffect(() => {
     fetchSalesData();
@@ -100,6 +106,13 @@ const AdminSalesPage: React.FC = () => {
         console.error('Error deleting sale:', error);
       }
     }
+  };
+
+  // Updated: handler for Print now prepares data and opens ReceiptModal
+  const handlePrintClick = async (saleId: number) => {
+    // Instead of building a preparedSale on the page, we pass the saleId to ReceiptModal and let it fetch directly.
+    setModalSaleId(saleId);
+    setShowReceiptModal(true);
   };
 
   // Method to open modal and fetch sale items
@@ -191,8 +204,10 @@ const AdminSalesPage: React.FC = () => {
             <tr>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Sale ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Discount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Amount (LKR)</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance (LKR)</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Payment Method</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User ID</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
@@ -203,8 +218,14 @@ const AdminSalesPage: React.FC = () => {
               <tr key={sale.saleId}>
                 <td className="px-6 py-4 whitespace-nowrap">#{sale.saleId}</td>
                 <td className="px-6 py-4 whitespace-nowrap">{new Date(sale.saleDate).toLocaleString()}</td>
-                <td className="px-6 py-4 whitespace-nowrap">LKR {sale.totalAmount.toFixed(2)}</td>
-                <td className="px-6 py-4 whitespace-nowrap">LKR {sale.totalDiscount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.totalAmount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">{sale.totalDiscount.toFixed(2)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {(sale.paymentAmount ?? 0).toFixed(2)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  {(sale.balance ?? 0).toFixed(2)}
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap">{sale.paymentMethod}</td>
                 <td className="px-6 py-4 whitespace-nowrap">#{sale.userId}</td>
                 <td className="px-6 py-4 whitespace-nowrap">
@@ -214,6 +235,15 @@ const AdminSalesPage: React.FC = () => {
                   >
                     View
                   </button>
+
+                  {/* Added Print button for testing (logs to console) */}
+                  <button
+                    onClick={() => handlePrintClick(sale.saleId)}
+                    className="text-green-600 hover:text-green-800 mr-4"
+                  >
+                    Print
+                  </button>
+
                   <button
                     onClick={() => handleDeleteClick(sale.saleId)}
                     className="text-red-600 hover:text-red-800"
@@ -268,7 +298,11 @@ const AdminSalesPage: React.FC = () => {
             WebkitBackdropFilter: "blur(8px)"
           }}
         >
-          <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 border border-blue-100 animate-fade-in">
+          {/* Modal: constrained to viewport height and prevents overflow */}
+          <div
+            className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 border border-blue-100 animate-fade-in flex flex-col"
+            style={{ maxHeight: '80vh', overflow: 'hidden' }}
+          >
             <button
               className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-3xl font-bold transition-colors"
               onClick={handleCloseModal}
@@ -276,47 +310,64 @@ const AdminSalesPage: React.FC = () => {
             >
               &times;
             </button>
-            <h2 className="text-2xl font-bold mb-6 text-blue-700">Sale #{modalSaleId} Items</h2>
-            {itemsLoading ? (
-              <div className="text-center py-8">
-                <p className="text-gray-500">Loading items...</p>
-              </div>
-            ) : itemsError ? (
-              <div className="text-center py-8 text-red-500">{itemsError}</div>
-            ) : saleItems.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full border border-blue-100 rounded-lg">
-                  <thead className="bg-blue-50">
-                    <tr>
-                      <th className="p-3 text-left">#</th>
-                      <th className="p-3 text-left">Product</th>
-                      <th className="p-3 text-left">Barcode</th>
-                      <th className="p-3 text-left">Qty</th>
-                      <th className="p-3 text-left">Price</th>
-                      <th className="p-3 text-left">Total Price</th>
-                      <th className="p-3 text-left">Discount</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {saleItems.map((item, idx) => (
-                      <tr key={item.saleItemId} className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}>
-                        <td className="p-3">{idx + 1}</td>
-                        <td className="p-3">{item.productName}</td>
-                        <td className="p-3">{item.barcode}</td>
-                        <td className="p-3">{item.qty}</td>
-                        <td className="p-3">LKR {item.price.toFixed(2)}</td>
-                        <td className="p-3">LKR {item.totalPrice.toFixed(2)}</td>
-                        <td className="p-3">LKR {item.discount.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
+            <h2 className="text-2xl font-bold mb-4 text-blue-700">Sale #{modalSaleId} Items</h2>
+
+            {/* Scrollable body: will scroll if content exceeds available space */}
+            <div className="flex-1 overflow-y-auto" style={{ minHeight: 0 }}>
+              {itemsLoading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading items...</p>
+                </div>
+              ) : itemsError ? (
+                <div className="text-center py-8 text-red-500">{itemsError}</div>
+              ) : saleItems.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
+              ) : (
+                <div className="overflow-auto" style={{ maxHeight: '60vh' }}>
+                  <table className="w-full border border-blue-100 rounded-lg">
+                    {/* sticky header so it remains on top when scrolling */}
+                    <thead className="bg-blue-50 sticky top-0 z-20">
+                       <tr>
+                        <th className="p-3 text-left">#</th>
+                        <th className="p-3 text-left">Product</th>
+                        <th className="p-3 text-left">Barcode</th>
+                        <th className="p-3 text-left">Qty</th>
+                        <th className="p-3 text-left">Price</th>
+                        <th className="p-3 text-left">Total Price</th>
+                        <th className="p-3 text-left">Discount</th>
+                       </tr>
+                     </thead>
+                     <tbody>
+                       {saleItems.map((item, idx) => (
+                         <tr key={item.saleItemId} className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}>
+                           <td className="p-3">{idx + 1}</td>
+                           <td className="p-3">{item.productName}</td>
+                           <td className="p-3">{item.barcode}</td>
+                           <td className="p-3">{item.qty}</td>
+                           <td className="p-3">LKR {item.price.toFixed(2)}</td>
+                           <td className="p-3">LKR {item.totalPrice.toFixed(2)}</td>
+                           <td className="p-3">LKR {item.discount.toFixed(2)}</td>
+                         </tr>
+                       ))}
+                     </tbody>
+                   </table>
+                 </div>
+               )}
+             </div>
           </div>
         </div>
+      )}
+
+      {/* Receipt Modal for printing — pass saleId so modal fetches full data */}
+      {showReceiptModal && modalSaleId !== null && (
+        <ReceiptModal
+          isOpen={showReceiptModal}
+          onClose={() => {
+            setShowReceiptModal(false);
+            setModalSaleId(null);
+          }}
+          saleId={modalSaleId}
+        />
       )}
     </div>
   );

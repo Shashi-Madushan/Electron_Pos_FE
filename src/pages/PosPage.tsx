@@ -2,7 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import CategoryScroll from '../components/CategoryScroll';
 import { getAllCategories, type Category } from '../services/CategoryService';
 import { getAllBrands } from '../services/BrandService';
-import { getActiveProducts  } from '../services/ProductService';
+import { 
+  getActiveProducts,
+  getProductsByCategory,
+  getProductsByBrand,
+  searchProducts,
+  getProductsByCategoryAndBrand,
+} from '../services/ProductService';
 import AddToCartModal from '../components/AddToCartModal';
 import type { Product } from '../types/Product';
 import type { Sale, SaleDTO, SaleItemDTO } from '../types/Sale';
@@ -16,7 +22,17 @@ import CheckoutSection from '../components/CheckoutSection';
 
 interface Brand {
   brandId: string | number;
-  brandName: string;  // Changed from 'name' to 'brandName'
+  brandName: string;  
+}
+
+interface OrderTotals {
+  originalTotal: number;
+  itemDiscounts: number;
+  subtotal: number;
+  orderDiscountPercentage: number;
+  orderDiscount: number;
+  paymentAmount?: number;
+  balance?: number;
 }
 
 const PosPage = () => {
@@ -27,6 +43,8 @@ const PosPage = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [brands, setBrands] = useState<Brand[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
+  // Master product list: always contains merged product details (not impacted by filtered display)
+  const [masterProducts, setMasterProducts] = useState<Product[]>([]);
   const [search, setSearch] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [isQuantityModalOpen, setIsQuantityModalOpen] = useState(false);
@@ -37,7 +55,8 @@ const PosPage = () => {
   const barcodeInputRef = useRef<HTMLInputElement>(null!);
   const [showReceipt, setShowReceipt] = useState(false);
   const [saleData, setSaleData] = useState<Sale | null>(null);
-  const [orderTotals, setOrderTotals] = useState({
+  const [isCheckoutDisabled, setIsCheckoutDisabled] = useState(false);
+  const [orderTotals, setOrderTotals] = useState<OrderTotals>({
     originalTotal: 0,
     itemDiscounts: 0,
     subtotal: 0,
@@ -45,6 +64,61 @@ const PosPage = () => {
     orderDiscount: 0
   });
 
+  // Helper: add missing product objects into masterProducts, but never overwrite existing objects
+  const addMissingProductsToMaster = (newProducts: Product[]) => {
+    setMasterProducts(prev => {
+      const existingIds = new Set(prev.map(p => Number(p.productId)));
+      const missing = newProducts.filter(p => !existingIds.has(Number(p.productId)));
+      if (missing.length === 0) {
+        return prev;
+      }
+      // append missing products while preserving original prev array identity
+      return [...prev, ...missing];
+    });
+  };
+
+  // Helper: update masterProducts in-place (for example after a refresh) but keep object references whenever possible
+  const updateMasterProductsFromList = (newProducts: Product[]) => {
+    setMasterProducts(prev => {
+      // Build quick lookup by id
+      const prevById = new Map(prev.map(p => [Number(p.productId), p]));
+      // Update existing objects in-place
+      newProducts.forEach(p => {
+        const id = Number(p.productId);
+        const existing = prevById.get(id);
+        if (existing) {
+          // update existing object fields to preserve reference
+          Object.assign(existing, p);
+        } else {
+          prevById.set(id, p);
+        }
+      });
+      // Return array that preserves previous order, adding new entries at the end
+      const result = [...prev];
+      newProducts.forEach(p => {
+        if (!result.some(r => Number(r.productId) === Number(p.productId))) {
+          result.push(p);
+        }
+      });
+      // If no previous items existed, return new list
+      if (prev.length === 0) {
+        return newProducts;
+      }
+      return result;
+    });
+  };
+
+  // Helper: unify products to reuse masterProducts object references when available
+  const unifyProductReferences = (list: Product[]) => {
+    if (!masterProducts || masterProducts.length === 0) return list;
+    const map = new Map(masterProducts.map(p => [Number(p.productId), p]));
+    return list.map(p => {
+      const existing = map.get(Number(p.productId));
+      return existing ?? p;
+    });
+  };
+
+  // Fetch categories, brands, and initial products
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -64,7 +138,10 @@ const PosPage = () => {
           ...brandsData.brandDTOList
         ]);
 
+        // initial product list for UI
         setProducts(productsData.productDTOList);
+        // set master list for stable lookups (names/prices) as well (use in-place update)
+        updateMasterProductsFromList(productsData.productDTOList);
       } catch (error) {
         console.error('Error fetching data:', error);
       }
@@ -73,13 +150,74 @@ const PosPage = () => {
     fetchData();
   }, []);
 
-  // Filter products based on selected category, brand, and search
-  const filteredProducts = products.filter(product => {
-    const categoryMatch = selectedCategory === 'all' || product.categoryId.toString() === selectedCategory;
-    const brandMatch = selectedBrand === 'all' || product.brandId.toString() === selectedBrand;
-    const searchMatch = product.productName.toLowerCase().includes(search.toLowerCase());
-    return categoryMatch && brandMatch && searchMatch;
-  });
+  // Fetch products from backend when filters/search change
+  // Note: include masterProducts in deps so we unify references whenever the master list changes
+  useEffect(() => {
+    const fetchFilteredProducts = async () => {
+      try {
+        let productsData: { productDTOList: Product[] } | null = null;
+
+        // All filters are 'all' and search is empty: get all active products
+        if (selectedCategory === 'all' && selectedBrand === 'all' && search.trim() === '') {
+          productsData = await getActiveProducts();
+        }
+        // Only search is present
+        else if (search.trim() !== '' && selectedCategory === 'all' && selectedBrand === 'all') {
+          productsData = await searchProducts(search.trim());
+        }
+        // Category and brand are selected (not 'all'), no search
+        else if (selectedCategory !== 'all' && selectedBrand !== 'all' && search.trim() === '') {
+          productsData = await getProductsByCategoryAndBrand(selectedCategory, selectedBrand);
+        }
+        // Only category is selected
+        else if (selectedCategory !== 'all' && selectedBrand === 'all' && search.trim() === '') {
+          productsData = await getProductsByCategory(selectedCategory);
+        }
+        // Only brand is selected
+        else if (selectedBrand !== 'all' && selectedCategory === 'all' && search.trim() === '') {
+          productsData = await getProductsByBrand(selectedBrand);
+        }
+        // Category and search
+        else if (selectedCategory !== 'all' && search.trim() !== '' && selectedBrand === 'all') {
+          const pd = await searchProducts(search.trim());
+          productsData = { productDTOList: pd.productDTOList.filter((p: any) => p.categoryId?.toString() === selectedCategory) };
+        }
+        // Brand and search
+        else if (selectedBrand !== 'all' && search.trim() !== '' && selectedCategory === 'all') {
+          const pd = await searchProducts(search.trim());
+          productsData = { productDTOList: pd.productDTOList.filter((p: any) => p.brandId?.toString() === selectedBrand) };
+        }
+        // Category, brand, and search
+        else if (selectedCategory !== 'all' && selectedBrand !== 'all' && search.trim() !== '') {
+          const pd = await searchProducts(search.trim());
+          productsData = { productDTOList: pd.productDTOList.filter(
+            (p: any) => p.categoryId?.toString() === selectedCategory && p.brandId?.toString() === selectedBrand
+          )};
+        }
+
+        if (productsData) {
+          // Important: DO NOT merge or overwrite masterProducts here.
+          // Only update the UI's products state.
+          // Also reuse any masterProducts objects to preserve identity (prevent remounts or name swap)
+          const unified = unifyProductReferences(productsData.productDTOList);
+          setProducts(unified);
+        } else {
+          setProducts([]);
+        }
+      } catch (error) {
+        console.error('Error fetching filtered products:', error);
+        setProducts([]);
+      }
+    };
+
+    fetchFilteredProducts();
+  }, [selectedCategory, selectedBrand, search, masterProducts]);
+
+  useEffect(() => {
+    if (orderItems.length > 0) {
+      setIsCheckoutDisabled(false);
+    }
+  }, [orderItems.length]);
 
   const handleUpdateQuantity = (productId: string, change: number) => {
     setOrderItems(items =>
@@ -94,6 +232,9 @@ const PosPage = () => {
   };
 
   const handleAddToOrder = (product: Product, quantity: number, discount: number) => {
+    // Ensure masterProducts contains this product (but don't overwrite any preexisting object)
+    addMissingProductsToMaster([product]);
+
     setOrderItems(items => {
       const existingItem = items.find(item => item.productId === Number(product.productId));
       const price = Math.max(0, product.salePrice - discount); // Apply absolute discount
@@ -132,12 +273,12 @@ const PosPage = () => {
   };
 
   const handleBarcodeScan = async (barcode: string) => {
-    const product = products.find(p => p.barcode === barcode);
+    // Find based on masterProducts (stable set) first
+    const product = masterProducts.find(p => p.barcode === barcode) || products.find(p => p.barcode === barcode);
     if (product) {
       setSelectedProduct(product);
       setIsQuantityModalOpen(true);
     } else {
-      // Show error notification or alert
       alert('Product not found');
     }
   };
@@ -147,7 +288,7 @@ const PosPage = () => {
     let totalAmount = 0;
     let totalDiscount = 0;
     orderItems.forEach(item => {
-      const originalPrice = products.find(p => Number(p.productId) === item.productId)?.salePrice || 0;
+      const originalPrice = masterProducts.find(p => Number(p.productId) === item.productId)?.salePrice || 0;
       totalAmount += item.price * item.qty;
       totalDiscount += (originalPrice - item.price) * item.qty;
     });
@@ -173,6 +314,8 @@ const PosPage = () => {
       subtotal: orderTotals.subtotal,
       orderDiscountPercentage: orderTotals.orderDiscountPercentage,
       orderDiscount: orderTotals.orderDiscount,
+      paymentAmount: orderTotals.paymentAmount ?? 0,
+      balance: orderTotals.balance ?? 0,
       saleItems: orderItems.map(item => ({
         saleItemId: null,
         saleId: null,
@@ -190,6 +333,8 @@ const PosPage = () => {
     try {
       const productsData = await getActiveProducts();
       setProducts(productsData.productDTOList);
+      // Update masterProducts with fresh stock/pricing information but preserve references
+      updateMasterProductsFromList(productsData.productDTOList);
     } catch (error) {
       console.error('Error refreshing products:', error);
     }
@@ -197,10 +342,13 @@ const PosPage = () => {
 
   // Updated handleCheckout function with product refresh
   const handleCheckout = async () => {
+    if (isCheckoutDisabled) return;
+    setIsCheckoutDisabled(true);
     const saleDTO = prepareSaleDTO();
     console.log('Prepared SaleDTO:', saleDTO);
     try {
       const response = await saveSale(saleDTO);
+      console.log("Response saleDTO :" , response.saleDTO)
       if (response.statusCode === 201) {
         // Create a complete sale object combining response and prepared data
         const newSaleData: Sale = {
@@ -219,9 +367,12 @@ const PosPage = () => {
         setShowReceipt(true);
         setOrderItems([]); // Clear the order items
         await refreshProducts(); // Refresh products after checkout
+      } else {
+        setIsCheckoutDisabled(false);
       }
     } catch (error) {
       console.error('Error during checkout:', error);
+      setIsCheckoutDisabled(false);
     }
   };
 
@@ -289,7 +440,7 @@ const PosPage = () => {
               <div className="h-full overflow-y-auto p-2">
                 <ProductsDisplay
                   viewMode={viewMode}
-                  products={filteredProducts}
+                  products={products}
                   onProductSelect={handleProductSelect}
                 />
               </div>
@@ -297,18 +448,20 @@ const PosPage = () => {
           </div>
 
           {/* Checkout Section */}
-          <CheckoutSection
-            orderItems={orderItems}
-            products={products}
-            paymentMethod={paymentMethod}
-            orderTotals={orderTotals}
-            onUpdateQuantity={handleUpdateQuantity}
-            onRemoveItem={handleRemoveItem}
-            onPaymentMethodChange={setPaymentMethod}
-            onCheckout={handleCheckout}
-            onClear={() => setOrderItems([])}
-            onOrderTotalsChange={setOrderTotals}
-          />
+          <div className={`transition-opacity ${isCheckoutDisabled ? 'pointer-events-none opacity-60' : ''}`}>
+            <CheckoutSection
+              orderItems={orderItems}
+              products={masterProducts} // pass stable list so names/prices are always present in cart bill
+              paymentMethod={paymentMethod}
+              orderTotals={orderTotals}
+              onUpdateQuantity={handleUpdateQuantity}
+              onRemoveItem={handleRemoveItem}
+              onPaymentMethodChange={setPaymentMethod}
+              onCheckout={handleCheckout}
+              onClear={() => setOrderItems([])}
+              onOrderTotalsChange={setOrderTotals}
+            />
+          </div>
 
           {/* Modals */}
           {isQuantityModalOpen && selectedProduct && (
