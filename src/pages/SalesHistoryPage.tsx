@@ -310,74 +310,94 @@ const SalesHistoryPage: React.FC = () => {
                 {/* Modal for Sale Items */}
                 {showModal && (
                     <div
-                        className="fixed inset-0 z-50 flex items-center justify-center"
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
                         style={{
                             background: "rgba(255,255,255,0.7)",
                             backdropFilter: "blur(8px)",
                             WebkitBackdropFilter: "blur(8px)"
                         }}
+                        onClick={handleCloseModal}
                     >
-                        <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-8 border border-blue-100 animate-fade-in">
-                            {/* ↑↑↑ max-w-3xl instead of max-w-xl for wider popup */}
+                        <div 
+                            className="relative bg-white rounded-2xl shadow-2xl w-full border border-blue-100"
+                            style={{
+                                maxWidth: '1000px',
+                                maxHeight: '90vh',
+                                display: 'flex',
+                                flexDirection: 'column'
+                            }}
+                            onClick={(e) => e.stopPropagation()}
+                        >
                             <button
-                                className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-3xl font-bold transition-colors"
+                                className="absolute top-3 right-3 text-gray-400 hover:text-blue-600 text-3xl font-bold transition-colors z-20 bg-white rounded-full w-10 h-10 flex items-center justify-center shadow-lg"
                                 onClick={handleCloseModal}
                                 aria-label="Close"
                             >
-                                &times;
+                                ×
                             </button>
-                            <h2 className="text-2xl font-bold mb-6 text-blue-700 flex items-center gap-2">
-                                <svg className="inline-block" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                                    <rect x="3" y="7" width="18" height="13" rx="2" fill="#e0f2fe" stroke="#3b82f6"/>
-                                    <path d="M16 3v4M8 3v4" stroke="#3b82f6"/>
-                                </svg>
-                                Sale #{modalSaleId} Items
-                            </h2>
-                            {itemsLoading ? (
-                                <div className="flex flex-col items-center py-8">
-                                    <svg className="animate-spin h-8 w-8 text-blue-400 mb-2" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                            
+                            {/* Fixed Header */}
+                            <div className="p-6 border-b border-gray-200 flex-shrink-0">
+                                <h2 className="text-2xl font-bold text-blue-700 flex items-center gap-2 pr-12">
+                                    <svg className="inline-block" width="28" height="28" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                                        <rect x="3" y="7" width="18" height="13" rx="2" fill="#e0f2fe" stroke="#3b82f6"/>
+                                        <path d="M16 3v4M8 3v4" stroke="#3b82f6"/>
                                     </svg>
-                                    <span className="text-gray-500 text-lg">Loading items...</span>
-                                </div>
-                            ) : itemsError ? (
-                                <div className="text-center py-8 text-red-500 font-semibold">{itemsError}</div>
-                            ) : saleItems.length === 0 ? (
-                                <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
-                            ) : (
-                                <div className="overflow-x-auto">
-                                    <table className="w-full border border-blue-100 rounded-lg shadow-sm bg-blue-50">
-                                        <thead>
-                                            <tr className="bg-blue-100 text-blue-900">
-                                                <th className="p-3 text-left font-semibold">#</th>
-                                                <th className="p-3 text-left font-semibold">Product</th>
-                                                <th className="p-3 text-left font-semibold">Barcode</th>
-                                                <th className="p-3 text-left font-semibold">Qty</th>
-                                                <th className="p-3 text-left font-semibold">Price</th>
-                                                <th className="p-3 text-left font-semibold">Total Price</th>
-                                                <th className="p-3 text-left font-semibold">Discount</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {saleItems.map((item, idx) => (
-                                                <tr
-                                                    key={item.saleItemId}
-                                                    className={idx % 2 === 0 ? "bg-white" : "bg-blue-50"}
-                                                >
-                                                    <td className="p-3">{idx + 1}</td>
-                                                    <td className="p-3">{item.productName}</td>
-                                                    <td className="p-3">{item.barcode}</td>
-                                                    <td className="p-3">{item.qty}</td>
-                                                    <td className="p-3 text-blue-700 font-medium">LKR {item.price.toFixed(2)}</td>
-                                                    <td className="p-3 text-purple-700 font-medium">LKR {item.totalPrice.toFixed(2)}</td>
-                                                    <td className="p-3 text-green-700 font-medium">LKR {item.discount.toFixed(2)}</td>
+                                    Sale #{modalSaleId} Items
+                                </h2>
+                            </div>
+
+                            {/* Scrollable Content */}
+                            <div 
+                                className="flex-1 overflow-auto p-6"
+                                style={{ minHeight: 0 }}
+                            >
+                                {itemsLoading ? (
+                                    <div className="flex flex-col items-center py-8">
+                                        <svg className="animate-spin h-8 w-8 text-blue-400 mb-2" viewBox="0 0 24 24">
+                                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"/>
+                                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"/>
+                                        </svg>
+                                        <span className="text-gray-500 text-lg">Loading items...</span>
+                                    </div>
+                                ) : itemsError ? (
+                                    <div className="text-center py-8 text-red-500 font-semibold">{itemsError}</div>
+                                ) : saleItems.length === 0 ? (
+                                    <div className="text-center py-8 text-gray-500">No items found for this sale.</div>
+                                ) : (
+                                    <div className="overflow-x-auto">
+                                        <table className="w-full border border-blue-100 rounded-lg shadow-sm bg-blue-50" style={{ minWidth: '800px' }}>
+                                            <thead className="sticky top-0 bg-blue-100 z-10">
+                                                <tr className="text-blue-900">
+                                                    <th className="p-3 text-left font-semibold">#</th>
+                                                    <th className="p-3 text-left font-semibold">Product</th>
+                                                    <th className="p-3 text-left font-semibold">Barcode</th>
+                                                    <th className="p-3 text-left font-semibold">Qty</th>
+                                                    <th className="p-3 text-left font-semibold">Price</th>
+                                                    <th className="p-3 text-left font-semibold">Total Price</th>
+                                                    <th className="p-3 text-left font-semibold">Discount</th>
                                                 </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                            )}
+                                            </thead>
+                                            <tbody>
+                                                {saleItems.map((item, idx) => (
+                                                    <tr
+                                                        key={item.saleItemId}
+                                                        className={`border-b hover:bg-blue-100 transition-colors ${idx % 2 === 0 ? "bg-white" : "bg-blue-50"}`}
+                                                    >
+                                                        <td className="p-3">{idx + 1}</td>
+                                                        <td className="p-3 font-medium">{item.productName}</td>
+                                                        <td className="p-3 text-gray-600 font-mono text-sm">{item.barcode}</td>
+                                                        <td className="p-3 font-semibold">{item.qty}</td>
+                                                        <td className="p-3 text-blue-700 font-medium">LKR {item.price.toFixed(2)}</td>
+                                                        <td className="p-3 text-purple-700 font-medium">LKR {item.totalPrice.toFixed(2)}</td>
+                                                        <td className="p-3 text-green-700 font-medium">LKR {item.discount.toFixed(2)}</td>
+                                                    </tr>
+                                                ))}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 )}
