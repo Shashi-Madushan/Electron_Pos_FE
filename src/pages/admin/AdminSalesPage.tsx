@@ -9,7 +9,6 @@ import {
 } from '../../services/SaleService';
 import { getAllSaleItemsBySaleId } from '../../services/SaleItemService';
 import ReceiptModal from '../../components/ReceiptModel2';
-import type { Sale as TSale } from '../../types/Sale';
 
 interface Sale {
   saleId: number;
@@ -50,7 +49,7 @@ const AdminSalesPage: React.FC = () => {
   const [customEnd, setCustomEnd] = useState('');
 
   const [showReceiptModal, setShowReceiptModal] = useState(false);
-  const [receiptSale, setReceiptSale] = useState<TSale | null>(null);
+  // We'll use modalSaleId (already present) to fetch sale in ReceiptModal2
 
   useEffect(() => {
     fetchSalesData();
@@ -111,49 +110,9 @@ const AdminSalesPage: React.FC = () => {
 
   // Updated: handler for Print now prepares data and opens ReceiptModal
   const handlePrintClick = async (saleId: number) => {
-    // console.log(`Print bill clicked for saleId: ${saleId}`);
-
-    try {
-      // find sale from current list
-      const saleFromList = sales.find(s => s.saleId === saleId);
-      // fetch sale items
-      const response = await getAllSaleItemsBySaleId(saleId);
-      const itemsArray = Array.isArray(response?.saleItemDTOList) ? response.saleItemDTOList : [];
-
-      // map items to the shape expected by the receipt (adjust fields as needed)
-      const mappedItems = itemsArray.map((it: any) => ({
-        saleItemId: it.saleItemId,
-        saleId: it.saleId,
-        productName: it.productName ?? it.productNameDTO ?? it.name ?? '',
-        barcode: it.barcode ?? '',
-        qty: it.qty,
-        price: it.price,
-        totalPrice: it.totalPrice ?? (it.price * it.qty),
-        discount: it.discount ?? 0
-      }));
-
-      // construct a sale object combining existing sale info and fetched items
-      const preparedSale: any = {
-        // prefer the existing sale object fields when available
-        saleId: saleFromList?.saleId ?? saleId,
-        saleDate: saleFromList?.saleDate ?? new Date().toISOString(),
-        totalAmount: saleFromList?.totalAmount ?? mappedItems.reduce((s: number, i: any) => s + (i.totalPrice || 0), 0),
-        totalDiscount: saleFromList?.totalDiscount ?? mappedItems.reduce((s: number, i: any) => s + (i.discount || 0), 0),
-        paymentMethod: saleFromList?.paymentMethod ?? 'CASH',
-        userId: saleFromList?.userId ?? 0,
-        customerId: saleFromList?.customerId ?? null,
-        saleItems: mappedItems,
-        paymentAmount: saleFromList?.paymentAmount,
-        balance: saleFromList?.balance
-      };
-
-      console.log(preparedSale)
-      // set state to open the receipt modal
-      setReceiptSale(preparedSale as TSale);
-      setShowReceiptModal(true);
-    } catch (err) {
-      console.error('Error preparing receipt for print:', err);
-    }
+    // Instead of building a preparedSale on the page, we pass the saleId to ReceiptModal and let it fetch directly.
+    setModalSaleId(saleId);
+    setShowReceiptModal(true);
   };
 
   // Method to open modal and fetch sale items
@@ -399,15 +358,15 @@ const AdminSalesPage: React.FC = () => {
         </div>
       )}
 
-      {/* Receipt Modal for printing */}
-      {showReceiptModal && receiptSale && (
+      {/* Receipt Modal for printing — pass saleId so modal fetches full data */}
+      {showReceiptModal && modalSaleId !== null && (
         <ReceiptModal
           isOpen={showReceiptModal}
           onClose={() => {
             setShowReceiptModal(false);
-            setReceiptSale(null);
+            setModalSaleId(null);
           }}
-          sale={receiptSale}
+          saleId={modalSaleId}
         />
       )}
     </div>

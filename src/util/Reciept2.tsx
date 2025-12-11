@@ -145,20 +145,73 @@ export default function Receipt(props: ReceiptProps) {
     onPrintComplete
   } = props;
 
-  // No external fetches: use data passed in `sale` directly.
-  // Derived values computed from sale prop:
-  const itemCount = useMemo(() => sale.saleItems?.length ?? 0, [sale.saleItems]);
-  const originalTotal = useMemo(() => {
-    return (sale.saleItems ?? []).reduce((s, it) => {
-      const itemTotal = (it.price ?? 0) * (it.qty ?? 0);
-      return s + itemTotal;
+  // No local fetches here: use items array from sale prop; fallback to empty array
+  const items = sale.saleItems ?? [];
+
+  // Helper: parse numeric values that might be strings or numbers; return undefined for invalid
+  const parseNumber = (v: any): number | undefined => {
+    if (v === null || v === undefined) return undefined;
+    if (typeof v === 'number' && !isNaN(v)) return v;
+    if (typeof v === 'string') {
+      const n = Number(v);
+      return isNaN(n) ? undefined : n;
+    }
+    return undefined;
+  };
+  const safeNumber = (v: any, fallback = 0) => {
+    const n = parseNumber(v);
+    return typeof n === 'number' ? n : fallback;
+  };
+
+  // Derived values computed from items (use items instead of sale.saleItems)
+
+  // item count
+  const itemCount = useMemo(() => items.length, [items]);
+
+  // original total: prefer sale.originalTotal; otherwise compute from items,
+  // where original unit price = (price + discount) and sum (unitOriginal * qty)
+  const parsedSaleOriginalTotal = parseNumber(sale.originalTotal);
+  const computedOriginalTotal = useMemo(() => {
+    return (items ?? []).reduce((s, it) => {
+       const unitOriginal = safeNumber(it.price, 0) + safeNumber(it.discount, 0);
+       return s + (unitOriginal * safeNumber(it.qty, 0));
     }, 0);
-  }, [sale.saleItems]);
-  const itemDiscounts = sale.totalDiscount ?? 0;
-  const subtotal = originalTotal - itemDiscounts;
+  }, [items]);
+  const displayOriginalTotal = safeNumber(parsedSaleOriginalTotal ?? computedOriginalTotal, 0);
 
-  const date = sale.saleDate || new Date();
+  // item discounts total: prefer sale.itemDiscounts -> sale.totalDiscount -> computed sum
+  const computedItemDiscounts = useMemo(() => {
+    return (items ?? []).reduce((s, it) => {
+       return s + (safeNumber(it.discount, 0) * safeNumber(it.qty, 0));
+    }, 0);
+  }, [items]);
+  const parsedSaleItemDiscounts = parseNumber(sale.itemDiscounts ?? sale.totalDiscount);
+  const displayItemDiscounts = safeNumber(parsedSaleItemDiscounts ?? computedItemDiscounts, 0);
 
+  // subtotal: prefer sale.subtotal; otherwise originalTotal - itemDiscounts
+  const parsedSaleSubtotal = parseNumber(sale.subtotal);
+  const computedSubtotal = Math.max(0, displayOriginalTotal - displayItemDiscounts);
+  const displaySubtotal = safeNumber(parsedSaleSubtotal ?? computedSubtotal, computedSubtotal);
+
+  // order discount percent and amount: parse and normalize (support 0..1 or 0..100)
+  const parsedOrderDiscountPercentage = parseNumber(sale.orderDiscountPercentage) ?? 0;
+  const parsedOrderDiscountAmount = parseNumber(sale.orderDiscount);
+
+  const normalizedOrderDiscountPercentage = parsedOrderDiscountPercentage > 0 && parsedOrderDiscountPercentage <= 1
+    ? parsedOrderDiscountPercentage * 100
+    : parsedOrderDiscountPercentage;
+  const decimalOrderDiscountPerc = (normalizedOrderDiscountPercentage / 100);
+
+  const computedOrderDiscountAmount = parsedOrderDiscountAmount ?? Math.round(displaySubtotal * decimalOrderDiscountPerc * 100) / 100;
+  const displayOrderDiscountAmount = safeNumber(computedOrderDiscountAmount, 0);
+  const displayOrderDiscountPerc = Number(normalizedOrderDiscountPercentage.toFixed(2));
+
+  // grand total: prefer sale.totalAmount; otherwise subtotal - orderDiscount
+  const parsedSaleTotalAmount = parseNumber(sale.totalAmount);
+  const displayGrandTotal = safeNumber(parsedSaleTotalAmount ?? (displaySubtotal - displayOrderDiscountAmount), Math.max(0, displaySubtotal - displayOrderDiscountAmount));
+
+  // Ensure date string: support sale.saleDate || sale.date || new Date()
+  const date = sale.saleDate ?? sale.date ?? new Date();
   const dateStr = useMemo(() => {
     const d = typeof date === "string" ? new Date(date) : date;
     return new Intl.DateTimeFormat(undefined, {
@@ -266,7 +319,6 @@ export default function Receipt(props: ReceiptProps) {
   return (
     <div id="receipt-root" className="receipt-root">
       <style dangerouslySetInnerHTML={{ __html: styles }} />
-
       <div className="receipt" role="document" aria-label="Sales receipt 80mm">
         {/* Header */}
         <div className="header">
@@ -284,7 +336,6 @@ export default function Receipt(props: ReceiptProps) {
           <div className="row"><span>Invoice</span><span>#{sale.saleId}</span></div>
           <div className="row"><span>Date</span><span>{dateStr}</span></div>
           <div className="row"><span>Cashier</span><span>{sale.userId ?? ""}</span></div>
-          {/* customer information not fetched; treat null as walk-in */}
           <div className="row"><span>Customer</span><span>{sale.customerId ? String(sale.customerId) : "Walk-in"}</span></div>
         </div>
 
@@ -297,52 +348,66 @@ export default function Receipt(props: ReceiptProps) {
             <div className="right">Total</div>
           </div>
           <div className="sep" />
-          {sale.saleItems.map((it) => {
+          {items.map((it) => {
              const base = (it.qty ?? 0) * (it.price ?? 0);
-             const discount = it.discount ?? 0;
-             const displayName = `Product ${it.productId}`;
-             const lineTotal = base - (discount * (it.qty ?? 0));
+             const rawDiscount = safeNumber(it.discount, 0);
+             // original unit price shown as price + per-unit discount (same as Receipt.tsx)
+             const perUnitOriginal = (it.price ?? 0) + rawDiscount;
+             const displayDiscountForItem = rawDiscount * safeNumber(it.qty, 0);
+             // Prefer item-level name provided by backend; otherwise fallback to generic product id
+             const displayName =
+               (it as any).productName ??
+               (it as any).name ??
+               (it.productId ? `Product ${it.productId}` : "Unnamed Product");
              return (
                <div className="item-row mono" key={it.saleItemId}>
                  <div className="item-name">
                    <div>{displayName}</div>
                    <div style={{ color: "#6b7280", fontSize: 14, fontWeight: 600 }}>
-                     {formatMoney(it.price ?? 0, currency)} × {it.qty ?? 0}
-                     {discount > 0 && (
+                     {formatMoney(perUnitOriginal, currency)} × {it.qty ?? 0}
+                     {displayDiscountForItem > 0 && (
                        <>
                          <br />
-                         Disc: {formatMoney((discount * (it.qty ?? 0)), currency)}
+                         Disc: {formatMoney(displayDiscountForItem, currency)}
                        </>
                      )}
                    </div>
                  </div>
-                 <div className="right">{formatMoney(lineTotal, currency)}</div>
+                 <div className="right">{formatMoney(base, currency)}</div>
                </div>
              );
            })}
-
         </div>
 
         <div className="sep" />
 
         {/* Totals */}
         <div className="totals mono">
-          <div className="row"><span>Orginal Total</span><span>{formatMoney(originalTotal, currency)}</span></div>
+          <div className="row"><span>Orginal Total</span><span>{formatMoney(parsedSaleOriginalTotal ?? computedOriginalTotal, currency)}</span></div>
           <div className="row"><span>Item Count</span><span>{itemCount}</span></div>
-          <div className="row"><span>Item Discounts</span><span>-{formatMoney(itemDiscounts, currency)}</span></div>
-          <div className="row"><span>Sub Total</span><span>{formatMoney(subtotal, currency)}</span></div>
 
-          <div className="sep" />
-          <div className="row bold"><span>Grand Total</span><span>{formatMoney(sale.totalAmount, currency)}</span></div>
-          <div className="sep" />
-          <div className="row"><span>Pay Amount</span><span>{formatMoney(sale.paymentAmount ?? 0, currency)}</span></div>
-          <div className="row"><span>Balance</span><span>{formatMoney(sale.balance ?? 0, currency)}</span></div>
+          {/* Item Discounts - prefer sale.itemDiscounts; show a leading '-' consistent with Receipt.tsx */}
+          <div className="row"><span>Item Discounts</span><span>-{formatMoney(safeNumber(parsedSaleItemDiscounts ?? displayItemDiscounts), currency)}</span></div>
+          <div className="row"><span>Sub Total</span><span>{formatMoney(parseNumber(sale.subtotal) ?? displaySubtotal, currency)}</span></div>
+
+          {/* Order Discount: match Receipt.tsx logic — show rows only if sale.orderDiscountPercentage > 0 */}
+          { (parseNumber(sale.orderDiscountPercentage) ?? 0) > 0 && (
+            <>
+              <div className="row"><span>Order Discount(%)</span><span>{displayOrderDiscountPerc} %</span></div>
+              <div className="row"><span>Order Discount</span><span>-{formatMoney(sale.orderDiscount ?? displayOrderDiscountAmount, currency)}</span></div>
+            </>
+          )}
+
+           <div className="sep" />
+          <div className="row bold"><span>Grand Total</span><span>{formatMoney(safeNumber(parseNumber(sale.totalAmount) ?? displayGrandTotal), currency)}</span></div>
+           <div className="sep" />
+          <div className="row"><span>Pay Amount</span><span>{formatMoney(safeNumber(parseNumber(sale.paymentAmount) ?? 0), currency)}</span></div>
+          <div className="row"><span>Balance</span><span>{formatMoney(safeNumber(parseNumber(sale.balance) ?? 0), currency)}</span></div>
         </div>
 
         <div className="footer"><strong>ご購入ありがとうございました！</strong><br />Thank you for your purchase!</div>
 
-        {/* Optional QR/Barcode slot (image source can be injected by parent) */}
-        {/* <div className="qr"><img src={qrSrc} alt="QR" width={120} height={120} /></div> */}
+        {/* Optional QR/Barcode slot */}
       </div>
 
     </div>
